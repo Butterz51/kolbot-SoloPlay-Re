@@ -705,9 +705,118 @@ const locations = {};
     return string;
   };
 
+  Starter.getNextName = function () {
+    const SaveLocation = "logs/Kolbot-SoloPlay/GlobalCharacter.json";
+    const Character = (Developer.GlobalSettings.Name);
+    const CharData = {
+      data: {
+        charNam: "",
+        charNum: 0
+      },
+
+      // Create a new Json file.
+      create: function () {
+        let string = JSON.stringify(this.data);
+        FileTools.writeText(SaveLocation, string);
+      },
+
+      // Read data from the Json file and return the data object.
+      read: function () {
+        let string = FileTools.readText(SaveLocation);
+        let obj = JSON.parse(string);
+
+        return obj;
+      },
+
+      // Read data from the Json file and return the name info.
+      readName: function () {
+        let string = FileTools.readText(SaveLocation);
+        let jsontext = JSON.parse(string);
+
+        return jsontext.charNam;
+      },
+
+      // Write a data object to the Json file.
+      write: function (obj) {
+        let string = JSON.stringify(obj);
+        FileTools.writeText(SaveLocation, string);
+      },
+
+      // Set next character name - increase alphabet in the Json file.
+      nextChar: function () {
+        let obj = CharData.read();
+        let alphabet = "abcdefghijklmnopqrstuvwxyz".toLowerCase();
+        let num = obj.charNum.toString();
+
+        let letter = "";
+        for (let i = 0; i < num.length; i++) {
+          letter += alphabet[parseInt(num[i], 10)];
+        }
+
+        letter += alphabet[obj.charNum];
+        obj.charNum = (obj.charNum + 1) % 26;
+        obj.charNam = Character + letter;
+        CharData.write(Object.assign(this.data, { charNum: obj.charNum, charNam: obj.charNam }));
+
+        return obj.charNam;
+      },
+
+      initialize: function () {
+        // If file exists check for valid info.
+        if (FileTools.exists(SaveLocation)) {
+          try {
+            let jsonStr = FileTools.readText(SaveLocation);
+            let jsonObj = JSON.parse(jsonStr);
+
+            // Return filename containing correct info.
+            if (Character && jsonObj.charNam && jsonObj.charNam.match(Character)) {
+              delay(500);
+              print(sdk.colors.DarkGreen + "Global Settings" + sdk.colors.White + " :: " + sdk.colors.Blue + "Successor in the alphabetical sequence.");
+              delay(250);
+              CharData.nextChar();
+              delay(500);
+
+              return CharData.readName();
+            }
+                  
+            // File exists but doesn't contain valid info - Remaking .json file.
+            if (Character && jsonObj.charNam !== Character) {
+              print(sdk.colors.DarkGreen + "Global Settings" + sdk.colors.White + " :: " + sdk.colors.Red + "Removed The Save Location.");
+              FileTools.remove(SaveLocation);
+              delay(800);
+
+              return this.initialize();
+            }
+          } catch (e) {
+            print(e);
+          }
+        } else {
+          // Check to see if main folder exist.
+          Starter.getNextNum(AccountData.createFolder());
+          delay(250);
+          // Creating a new .json file.
+          print(sdk.colors.DarkGreen + "Global Settings" + sdk.colors.White + " :: " + sdk.colors.Blue + "Creating New Character Name.");
+          CharData.create();
+          delay(500);
+          CharData.nextChar();
+          delay(rand(5000, 10000));
+
+          return CharData.readName();
+        }
+        return CharData.create();
+      }
+    };
+
+    print(sdk.colors.DarkGreen + "Initializing " + sdk.colors.White + " :: " + sdk.colors.DarkGreen + "Global Settings.");
+    CharData.initialize();
+
+    return CharData.readName();
+  };
+
   Starter.getNextNum = function () {
     const SaveLocation = "logs/Kolbot-SoloPlay/GlobalAccount.json";
-    const AccountName = (Starter.Config.GlobalAccount);
+    const AccountName = (Developer.GlobalSettings.Account);
+    //const AccountName = (Starter.Config.GlobalAccount);
     const AccountData = {
       data: {
         account: "",
@@ -901,9 +1010,9 @@ const locations = {};
         } else {
           // new account
           if (Starter.profileInfo.account === "") {
-            if (Starter.Config.GlobalAccount || Starter.Config.GlobalAccountPassword) {
-              Starter.profileInfo.account = Starter.Config.GlobalAccount.length > 0 ? Starter.getNextNum() : Starter.randomString(12, true);
-              Starter.profileInfo.password = Starter.Config.GlobalAccountPassword.length > 0 ? Starter.Config.GlobalAccountPassword : Starter.randomString(12, true);
+            if (Developer.GlobalSettings.Account || Developer.GlobalSettings.Password) {
+              Starter.profileInfo.account = Developer.GlobalSettings.Account.length > 0 ? Starter.getNextNum() : Starter.randomString(12, true);
+              Starter.profileInfo.password = Developer.GlobalSettings.Password.length > 0 ? Developer.GlobalSettings.Password : Starter.randomString(12, true);
 
               try {
                 if (Starter.profileInfo.account.length > 15) throw new Error("Account name exceeds MAXIMUM length (15). Please enter a shorter name to restart the count.");
@@ -914,8 +1023,8 @@ const locations = {};
                 D2Bot.stop();
               }
 
-              console.log("Kolbot-SoloPlay :: Generated account information. " + (Starter.Config.GlobalAccount.length > 0 ? "Pre-defined " : "Random ") + "account used");
-              console.log("Kolbot-SoloPlay :: Generated password information. " + (Starter.Config.GlobalAccountPassword.length > 0 ? "Pre-defined " : "Random ") + "password used");
+              console.log("Kolbot-SoloPlay :: Generated account information. " + (Developer.GlobalSettings.Account.length > 0 ? "Pre-defined " : "Random ") + "account used");
+              console.log("Kolbot-SoloPlay :: Generated password information. " + (Developer.GlobalSettings.Password.length > 0 ? "Pre-defined " : "Random ") + "password used");
               ControlAction.timeoutDelay("Generating Account Information", Starter.Config.DelayBeforeLogin * 1e3);
             } else {
               Starter.profileInfo.account = Starter.randomString(12, true);
