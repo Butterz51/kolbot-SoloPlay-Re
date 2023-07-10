@@ -2,6 +2,7 @@
 *  @filename    NameGen.js
 *  @author      isid0re, theBGuy (added bigger list of nouns)
 *  @desc        Creates character names by combining a Descriptive Adjective + Noun
+*  @contributor Butterz - Global Character Names.
 *
 */
 
@@ -235,17 +236,24 @@
   ];
 
   const NameGen = function () {
-    //let random1 = Math.floor(Math.random() * (adjectives.length + 1));
-    let adjective = adjectives[rand(0, adjectives.length - 1)];
-    let list2Limit = 16 - adjective.length;
-    let list2 = nouns.filter(function (element) {
-      return element.length < list2Limit;
-    });
+    if (Developer.GlobalSettings.Enable) {
+      isIncluded("SoloPlay/Tools/OOGOverrides.js");     
+      Starter.getNextName();
 
-    let noun = list2[rand(0, list2.length - 1)];
-    let namechosen = adjective + noun;
+      return Starter.getNextName();
+    } else {
+      //let random1 = Math.floor(Math.random() * (adjectives.length + 1));
+      let adjective = adjectives[rand(0, adjectives.length - 1)];
+      let list2Limit = 16 - adjective.length;
+      let list2 = nouns.filter(function (element) {
+        return element.length < list2Limit;
+      });
 
-    return namechosen.toLowerCase();
+      let noun = list2[rand(0, list2.length - 1)];
+      let namechosen = adjective + noun;
+
+      return namechosen.toLowerCase();
+    }
   };
 
   module.exports = NameGen;

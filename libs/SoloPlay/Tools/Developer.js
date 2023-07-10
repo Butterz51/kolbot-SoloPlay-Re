@@ -2,7 +2,7 @@
 *  @filename    Developer.js
 *  @author      theBGuy
 *  @desc        Tools/Settings for Kolbot-SoloPlay
-*  @contributor Butterz - Added more options for Bumpers,Socket & Imbue 
+*  @contributor Butterz - Added more options for Bumpers,Socket & Imbue. Global Account Settings.
 *
 */
 
@@ -12,6 +12,13 @@
  * - add name choices in similar manner, would have to experiment with max lengths allowed as a prefix
  */
 const Developer = {
+  // @desc - Global Account Settings
+  GlobalSettings: {
+    Account: "", // Define a value for a global account with a maximum of 12 characters, plus an additional 3 characters for the automatically generated suffix upon creation.
+    Password: "", // Establish a global password value for generating accounts.
+    Enable: false, // Enable the 'Character Name' feature by setting it to true.
+    Name: "", // Assign a global character name.
+  },
   // @desc - set to true if using the PlugY mod - allows use of larger stash
   plugyMode: false,
   // @desc - log game/bot statistics to .csv files located at SoloPlay/Data/
