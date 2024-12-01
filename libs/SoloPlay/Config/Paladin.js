@@ -32,6 +32,7 @@
 
   /* Pickit configuration. */
   Config.PickRange = 40;
+  Config.PickitFiles.push("JBH.nip");
   //	Config.PickitFiles.push("kolton.nip");
   //	Config.PickitFiles.push("LLD.nip");
 
