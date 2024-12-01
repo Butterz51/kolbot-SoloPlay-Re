@@ -17,11 +17,16 @@ includeIfNotIncluded("SoloPlay/Tools/Developer.js");
 includeIfNotIncluded("SoloPlay/Tools/CharData.js");
 includeIfNotIncluded("SoloPlay/Functions/PrototypeOverrides.js");
 
+// system features
+include("systems/features/Settings.js");
+
 // not every thread needs these
 /** @global */
 const Overrides = require("../../modules/Override");
 /** @global */
 const Coords_1 = require("../Modules/Coords");
+/** @global */
+const PotData = require("../Modules/GameData/PotData");
 /** @global */
 const GameData = require("../Modules/GameData/GameData");
 
@@ -36,8 +41,19 @@ function myPrint (str = "", toConsole = false, color = 0) {
     color = color.capitalize(true);
     color = !!sdk.colors.D2Bot[color] ? sdk.colors.D2Bot[color] : 0;
   }
-  toConsole && D2Bot.printToConsole("Kolbot-SoloPlay :: " + str, color);
+  toConsole && Features.SoloPlayConsole.HideBroke ? D2Bot.printToConsole("Kolbot-SoloPlay :: " + str, color) : null;
 }
+
+/** 
+ * Calculate minGameTime based on individual profiles and their associated IP count
+ * Invokes the calculateAndSetMinGameTime() function from Developer.js
+ * Checks whether the maximum allowed IPs is below 8, and then determines the time accordingly
+ * Utilizes data from either the array values or static values in Developer.js
+ */
+let minGameTime = calculateAndSetMinGameTime();
+let sharedData = {
+  goal: ""
+};
 
 // general settings
 const SetUp = {
@@ -46,7 +62,7 @@ const SetUp = {
 
   init: function () {
     // ensure finalBuild is properly formatted
-    const checkBuildTemplate = function () {
+    let checkBuildTemplate = function () {
       let build = (["Bumper", "Socketmule", "Imbuemule"].includes(SetUp.finalBuild)
         ? ["Javazon", "Cold", "Bone", "Hammerdin", "Whirlwind", "Wind", "Trapsin"][me.classid]
         : SetUp.finalBuild) + "Build";
@@ -166,8 +182,8 @@ const SetUp = {
         }
 
         let mercInfo = Mercenary.getMercInfo(merc);
-        if (merc.classid !== me.data.merc.classid) {
-          me.data.merc.classid = merc.classid;
+        if (mercInfo.classid !== me.data.merc.classid) {
+          me.data.merc.classid = mercInfo.classid;
         }
         if (mercInfo.act !== me.data.merc.act) {
           me.data.merc.act = mercInfo.act;
@@ -205,8 +221,8 @@ const SetUp = {
         let changed = Misc.recursiveSearch(me.data.merc, _tempMerc);
   
         if (Object.keys(changed).length > 0) {
-          CharData.updateData("merc", me.data);
-          // mUpdate = true;
+          // CharData.updateData("merc", me.data.merc);
+          mUpdate = true;
         }
       }
 
@@ -352,7 +368,7 @@ const SetUp = {
 
     // log info
     myPrint(this.finalBuild + " goal reached. On to the next.");
-    D2Bot.printToConsole(
+    if (!Features.SoloPlayConsole.HideGoalAchieved) D2Bot.printToConsole(
       "Kolbot-SoloPlay: " + this.finalBuild + " goal reached"
       + (printTotalTime ? " (" + (Time.format(gameObj.Total + Time.elapsed(gameObj.LastSave))) + "). " : ". ")
       + "Making next...",
@@ -481,18 +497,21 @@ const SetUp = {
     }
 
     /* General configuration. */
-    Config.MinGameTime = 400;
-    Config.MaxGameTime = 7200;
+    Config.MinGameTime = minGameTime;
+    Config.MaxGameTime = 9000;
     Config.MiniShopBot = true;
     Config.PacketShopping = true;
     Config.TownCheck = true;
     Config.LogExperience = false;
     Config.PingQuit = [{ Ping: 600, Duration: 10 }];
-    Config.Silence = true;
+    Config.Silence = !Developer.webSiteReport.enabled || !(me.hell && me.accessToAct(4) && me.charlvl > 80);
+    Config.LocalChat = Developer.webSiteReport.enabled && me.hell && me.accessToAct(4) && me.charlvl > 80
+      ? { Enabled: true, Toggle: false, Mode: 1 }
+      : { Enabled: false, Toggle: false, Mode: 0 };
     Config.OpenChests.Enabled = true;
     Config.LowGold = me.normal ? 25000 : me.nightmare ? 50000 : 100000;
     Config.PrimarySlot = 0;
-    Config.PacketCasting = 1;
+    Config.PacketCasting = 2;
     Config.WaypointMenu = true;
     Config.Cubing = !!me.getItem(sdk.items.quest.Cube);
     Config.MakeRunewords = true;
@@ -521,20 +540,245 @@ const SetUp = {
 
     /* AutoMule configuration. */
     Config.AutoMule.Trigger = [];
-    Config.AutoMule.Force = [];
-    Config.AutoMule.Exclude = [
-      "[name] >= Elrune && [name] <= Lemrune",
-    ];
+    
+    if (me.charlvl > 85) {
+      Config.AutoMule.Force = [
+        /* Runes */
+        //"[Name] >= ElRune && [Name] <= FalRune", // Low Batch
+        //"[Name] >= LemRune && [Name] <= GulRune", // Medium Batch
+        //"[Name] >= VexRune && [Name] <= ZodRune", // High Batch
+        //"[Name] >= ElRune && [Name] <= ZodRune", // All
 
-    /* Shrine scan configuration. */
+        //##########################
+        //## Uniques Items / Sets ##
+        //##########################
+        /* Weapons */
+        "[Type] == Axe && ([Quality] == Unique || [Quality] == Set)",
+        "[Type] == Bow && ([Quality] == Unique || [Quality] == Set)",
+        "[Type] == Crossbow && ([Quality] == Unique || [Quality] == Set)",
+        "[Type] == Javelin && ([Quality] == Unique || [Quality] == Set)",
+        "[Type] == Mace && ([Quality] == Unique || [Quality] == Set)",
+        "[Type] == Polearm && ([Quality] == Unique || [Quality] == Set)",
+        "[Type] == Scepter && ([Quality] == Unique || [Quality] == Set)",
+        "[Type] == Spear && ([Quality] == Unique || [Quality] == Set)",
+        "[Type] == Sword && ([Quality] == Unique || [Quality] == Set)",
+        "[Type] == Wand && ([Quality] == Unique || [Quality] == Set)",
+        "[Type] == Weapon && ([Quality] == Unique || [Quality] == Set)",
+
+        /* Armors */
+        "[Type] == Armor && ([Quality] == Unique || [Quality] == Set)",
+        "[Type] == Circlet && ([Quality] == Unique || [Quality] == Set)",
+        "[Type] == Helm && ([Quality] == Unique || [Quality] == Set)",
+        "[Type] == Shield && ([Quality] == Unique || [Quality] == Set)",
+        "[Type] == AuricShields && ([Quality] == Unique || [Quality] == Set)",
+
+        /* Rings & Amulets */
+        "[Type] == Ring && ([Quality] == Unique || [Quality] == Set)",
+        "[Type] == Amulet && ([Quality] == Unique || [Quality] == Set)",
+
+        /* Jewels */
+        "[Type] == Jewel && [Quality] == Unique",
+
+        //#################
+        //## White Items ##
+        //#################
+        /* Weapons */
+        "[Name] == GreatPoleaxe && [Flag] == Ethereal && [Quality] == Normal # [Sockets] >= 4",
+        "[Name] == GiantThresher && [Flag] == Ethereal && [Quality] == Normal # [Sockets] >= 4",
+        "[Name] == WarPike && [Flag] == Ethereal && [Quality] == Normal # [Sockets] == 6",
+        "[Name] == CrypticAxe && [Flag] == Ethereal && [Quality] == Normal # [Sockets] >= 4",
+        "[Name] == ColossusVoulge && [Flag] == Ethereal && [Quality] == Normal # [Sockets] >= 4",
+        "[Name] == Flail # [Sockets] >= 4",
+        "[Name] == PhaseBlade # [Sockets] >= 5",
+        //"[Name] == BerserkerAxe # [Sockets] == 5",
+        "[Name] == CrystalSword # [Sockets] == 5",
+        
+        /* Armors */
+        "[Name] == MagePlate # ([Sockets] == 3 || [EnhancedDefense] >= 1)",
+        "[Name] == DuskShroud # ([Sockets] >= 3 || [EnhancedDefense] >= 1)",
+        "[Name] == Wyrmhide # ([Sockets] >= 3 || [EnhancedDefense] >= 1)",
+        "[Name] == ScarabHusk # ([Sockets] >= 3 || [EnhancedDefense] >= 1)",
+        "[Name] == GreatHauberk # [Sockets] == 4",
+        "[Name] == ArchonPlate # ([Sockets] >= 3 || [EnhancedDefense] >= 1)",
+        "[Name] == SacredArmor # [Sockets] == 4",
+
+        /* Helms */
+        //"[Name] == GrandCrown # [Sockets] == 3",
+        "[Name] == DemonHead # [Sockets] == 3 || [LifeLeech] >= 8",
+        //"[Name] == BoneVisage # [Sockets] == 3",
+        //"[Name] == Diadem # [Sockets] == 3",
+        
+        /* Shields */
+        //"[Name] == TrollNest # [Sockets] == 3",
+        //"[Name] == Monarch # [Sockets] >= 3",
+
+        /* Auric Shields (Paladin) */
+        "[Name] == AkaranTarge # [FireResist] >= 40 && [Sockets] == 4",
+        "[Name] == AkaranRondache # [FireResist] >= 40 && [Sockets] == 4",
+        //"[Name] == ZakarumShield # [FireResist] >= 40 && [Sockets] == 4",
+        "[Name] == ZakarumShield && [Quality] == Unique",
+        "[Name] == SacredRondache # [FireResist] >= 40 && [Sockets] == 4",
+        "[Name] == SacredTarge # [FireResist] >= 40 && [Sockets] == 4",
+        "[Name] == VortexShield # [Sockets] == 0",
+
+        //#################
+        //## Magic Items ##
+        //#################
+        /* Rings & Amulets */
+        "[Type] == Ring && [Quality] == Magic # [ItemMagicBonus] >= 40"
+      ];
+
+      Config.AutoMule.Exclude = [
+        //####################
+        //## RuneWord Items ##
+        //####################
+        // Shields with FCR less than or equal to 33
+        "[Type] == Shield && [Flag] == RuneWord # [Defense] <= 140 && [FCR] <= 33",
+        "[Type] == AuricShields && [Flag] == RuneWord # [FireResist] <= 38 && [FCR] <= 33",
+        // Normal quality Polearms or Spears with specific conditions
+        "([Type] == Polearm || [Type] == Spear) && [Quality] == Normal && [Flag] == RuneWord && [Flag] == Ethereal # ([MeditationAura] <= 16 && [EnhancedDamage] <= 199) || ([ConvictionAura] == 12 && [EnhancedDamage] <= 289 && [PassiveLtngPierce] <= 49) || ([PlusDefense] <= 249 && [FireResist] <= 24) || ([EnhancedDamage] <= 374 && [LifeLeech] <= 12)",
+        // Superior quality Polearms or Spears with MeditationAura less than or equal to 16
+        "([Type] == Polearm || [Type] == Spear) && [Quality] == Superior && [Flag] == RuneWord # [MeditationAura] <= 16",
+        // Swords with FCR greater than or equal to 25
+        "[Type] == Sword && [Flag] == Runeword # [FCR] >= 25",
+
+        //######################
+        //## White/Grey Items ##
+        //######################
+        /* Weapons */
+        "([Type] == Polearm || [Type] == Spear) && [Quality] == Normal && [Flag] != Ethereal # [Sockets] >= 0",
+        "[Name] == GreatPoleaxe && [Flag] == Ethereal # [Sockets] == 0",
+        "[Name] == GiantThresher && [Flag] == Ethereal # [Sockets] == 0",
+        "[Name] == WarPike && [Flag] == Ethereal # [Sockets] == 0",
+        "[Name] == CrypticAxe && [Flag] == Ethereal # [Sockets] == 0",
+        "[Name] == ColossusVoulge && [Flag] == Ethereal # [Sockets] == 0",
+        "[Name] == Flail # [Sockets] == 0",
+        "[Name] == PhaseBlade # [Sockets] == 0",
+        "[Name] == BerserkerAxe # [Sockets] == 0",
+        "[Name] == CrystalSword # [Sockets] == 0",
+        
+        /* Armors */
+        "[Name] == MagePlate # [Sockets] == 0",
+        "[Name] == DuskShroud # [Sockets] == 0",
+        "[Name] == Wyrmhide # [Sockets] == 0",
+        "[Name] == ScarabHusk # [Sockets] == 0",
+        "[Name] == GreatHauberk && [Flag] == Ethereal # [Sockets] == 0",
+        "[Name] == ArchonPlate # [Sockets] == 0",
+        "[Name] == SacredArmor && [Flag] == Ethereal # [Sockets] == 0",
+      
+        /* Helms */
+        "[Name] == GrandCrown # [Sockets] == 0",
+        "[Name] == DemonHead # [Sockets] == 0",
+        "[Name] == BoneVisage # [Sockets] == 0",
+        "[Name] == Diadem # [Sockets] == 0",
+
+        /* Shields */
+        "[Name] == TrollNest # [Sockets] == 0",
+        "[Name] == Monarch # [Sockets] == 0",
+
+        /* Auric Shields */
+        "[Name] == AkaranTarge # [Sockets] == 0",
+        "[Name] == AkaranRondache # [Sockets] == 0",
+        "[Name] == ZakarumShield # [Sockets] == 0",
+        "[Name] == SacredRondache # [Sockets] == 0",
+        "[Name] == SacredTarge # [Sockets] == 0",
+        //"[Name] == VortexShield # [Sockets] == 0",
+
+        /* Rings & Amulets */
+        "[Type] == Ring && [Quality] == Magic",
+        "[Type] == Amulet && [Quality] == Magic",
+
+        /* Jewels */
+        "[Type] == Jewel && [Quality] == Magic",
+
+        /* Runes */
+        //"[Name] >= ElRune && [Name] <= LemRune",
+        "[Name] >= ElRune && [Name] <= FalRune", // Low Batch
+        "[Name] >= LemRune && [Name] <= GulRune", // Medium Batch
+        //"[Name] >= VexRune && [Name] <= ZodRune", // High Batch
+        //"[Name] >= ElRune && [Name] <= ZodRune", // All
+
+        /* Gems */
+        "[Type] == Amethyst",
+        "[Type] == Diamond",
+        "[Type] == Emerald",
+        "[Type] == Ruby",
+        "[Type] == Sapphire",
+        "[Type] == Skull",
+        "[Type] == Topaz",
+        /* Chipped */
+        "[Name] == ChippedAmethyst",
+        "[Name] == ChippedDiamond",
+        "[Name] == ChippedEmerald",
+        "[Name] == ChippedRuby",
+        "[Name] == ChippedSapphire",
+        "[Name] == ChippedSkull",
+        "[Name] == ChippedTopaz",
+        /* Flawed */
+        "[Name] == FlawedAmethyst",
+        "[Name] == FlawedDiamond",
+        "[Name] == FlawedEmerald",
+        "[Name] == FlawedRuby",
+        "[Name] == FlawedSapphire",
+        "[Name] == FlawedSkull",
+        "[Name] == FlawedTopaz",
+        /* Regular */
+        "[Name] == Amethyst",
+        "[Name] == Diamond",
+        "[Name] == Emerald",
+        "[Name] == Ruby",
+        "[Name] == Sapphire",
+        "[Name] == Skull",
+        "[Name] == Topaz",
+        /* Flawless */
+        "[Name] == FlawlessAmethyst",
+        "[Name] == FlawlessDiamond",
+        "[Name] == FlawlessEmerald",
+        "[Name] == FlawlessRuby",
+        "[Name] == FlawlessSapphire",
+        "[Name] == FlawlessSkull",
+        "[Name] == FlawlessTopaz",
+        /* Perfect */
+        "[Name] == PerfectAmethyst",
+        "[Name] == PerfectDiamond",
+        "[Name] == PerfectEmerald",
+        "[Name] == PerfectRuby",
+        "[Name] == PerfectSapphire",
+        "[Name] == PerfectSkull",
+        "[Name] == PerfectTopaz",
+
+        /* Default */
+        "[Name] == TwistedEssenceOfSuffering", 
+        "[Name] == ChargedEssenceOfHatred",
+        "[Name] == BurningEssenceOfTerror",
+        "[Name] == FesteringEssenceOfDestruction",
+        "[Name] == ajadefigurine",
+        "[Name] == Mephisto'sSoulstone",
+        "[Name] == diablo'shorn",
+        "[Name] == mephisto'sbrain",
+        "[Name] == baal'seye",
+        "[name] == keyofhate",
+        "[name] == keyofterror",
+        "[name] == keyofdestruction"
+      ];
+    } else {
+      Config.AutoMule.Force = [];
+      Config.AutoMule.Exclude = [
+        "[Name] >= ElRune && [Name] <= LemRune",
+      ];
+    }
+
     if (Check.currentBuild().caster) {
       Config.ScanShrines = [
         sdk.shrines.Refilling, sdk.shrines.Health,
         sdk.shrines.Mana, sdk.shrines.Gem,
         sdk.shrines.Monster, sdk.shrines.HealthExchange,
         sdk.shrines.ManaExchange, sdk.shrines.Experience,
-        sdk.shrines.Armor, sdk.shrines.ResistFire,
-        sdk.shrines.ResistCold, sdk.shrines.ResistLightning,
+
+
+
+        sdk.shrines.Armor, sdk.shrines.ResistFire, 
+        sdk.shrines.ResistCold, sdk.shrines.ResistLightning, 
         sdk.shrines.ResistPoison, sdk.shrines.Skill,
         sdk.shrines.ManaRecharge, sdk.shrines.Stamina
       ];
@@ -548,6 +792,10 @@ const SetUp = {
         sdk.shrines.Armor, sdk.shrines.ResistFire,
         sdk.shrines.ResistCold, sdk.shrines.ResistLightning,
         sdk.shrines.ResistPoison, sdk.shrines.ManaRecharge, sdk.shrines.Stamina
+
+
+
+
       ];
     }
 
@@ -557,11 +805,11 @@ const SetUp = {
     Config.LogOrgans = false;
     Config.LogMiddleRunes = true;
     Config.LogHighRunes = true;
-    Config.ShowCubingInfo = true;
+    Config.ShowCubingInfo = false;
 
     /* DClone. */
     Config.StopOnDClone = !!me.expansion;
-    Config.SoJWaitTime = 5; // Time in minutes to wait for another SoJ sale before leaving game. 0 = disabled
+    Config.SoJWaitTime = 25; // Time in minutes to wait for another SoJ sale before leaving game. 0 = disabled
     Config.KillDclone = !!me.expansion;
     Config.DCloneQuit = false;
 
@@ -571,7 +819,7 @@ const SetUp = {
     Config.HealStatus = true;
     Config.UseMerc = me.expansion;
     Config.MercWatch = SetUp.mercwatch;
-    Config.StashGold = me.charlvl * 1000;
+    Config.StashGold = me.charlvl * 100;
     Config.ClearInvOnStart = false;
 
     /* Inventory buffers and lock configuration. */
@@ -752,7 +1000,7 @@ const Check = {
 
     if (diff > -1) {
       console.debug("My gold: " + myGold + ", Repair cost: " + repairCost);
-      goToDifficulty(diff, msg + (" My gold: " + myGold + ", Repair cost: " + repairCost));
+      goToDifficulty(!Features.SoloPlayConsole.HideBroke && diff, msg + (" My gold: " + myGold + ", Repair cost: " + repairCost));
 
       return true;
     }
@@ -808,7 +1056,7 @@ const Check = {
 
     if (!nextDiff) return false;
     if (announce && str) {
-      D2Bot.printToConsole("Kolbot-SoloPlay: " + str, color);
+      if (!Features.SoloPlayConsole.HideBroke) D2Bot.printToConsole("Kolbot-SoloPlay: " + str, color);
     }
 
     return sdk.difficulty.nameOf(nextDiff);
@@ -862,13 +1110,13 @@ const Check = {
     return needRunes;
   },
 
-  /**
-   * @deprecated Use me.checkItem() instead
-   * @param {number | string} type 
-   * @param {string} [flag] 
-   * @param {string} [iName] 
-   * @returns 
-   */
+ /**
+  * @deprecated Use me.checkItem() instead
+  * @param {number | string} type 
+  * @param {string} [flag] 
+  * @param {string} [iName] 
+  * @returns 
+  */
   haveItem: function (type, flag, iName) {
     let [isClassID, itemCHECK, typeCHECK] = [false, false, false];
 
@@ -1054,20 +1302,60 @@ const Check = {
     };
   },
 
+  generateCharacterLog: function () {
+    let basePath = "logs/Kolbot-SoloPlay";
+    let mainPath = basePath + "/Account-List";
+    let realmPath = mainPath + "/" + me.realm;
+    let ladderType = me.ladder > 0 ? "Ladder" : "Non-Ladder";
+    let ladderTypePath = realmPath + "/" + ladderType;
+    let charLogPath = ladderTypePath + "/" + (me.ladder > 0 ? "L." : "NL.") + sharedData.goal + "s.Acc." + me.account + ".CharList.txt";
+
+    // Data-file already exists
+    if (FileTools.exists(charLogPath)) {
+      return;
+    }
+
+    // Create necessary directories if they don't exist
+    if (!FileTools.exists(basePath)) {
+      print(sdk.colors.DarkGreen + "Creating Directory: " + basePath);
+      dopen("logs").create("Kolbot-SoloPlay");
+      delay(2500 + me.ping);
+    }
+
+    if (!FileTools.exists(mainPath)) {
+      print(sdk.colors.DarkGreen + "Creating Directory: " + mainPath);
+      dopen(basePath).create("Account-List");
+      delay(2500 + me.ping);
+    }
+
+    if (!FileTools.exists(realmPath)) {
+      print(sdk.colors.DarkGreen + "Creating Directory: " + realmPath);
+      dopen(mainPath).create(me.realm);
+      delay(2500 + me.ping);
+    }
+
+    if (!FileTools.exists(ladderTypePath)) {
+      print(sdk.colors.DarkGreen + "Creating Directory: " + ladderType);
+      dopen(realmPath).create(ladderType);
+      delay(2500 + me.ping);
+    }
+  },
+
+
   checkSpecialCase: function () {
     const questCompleted = (id) => !!Misc.checkQuest(id, sdk.quest.states.ReqComplete);
-    let goalReached = false, goal = "";
+    let goalReached = false;
 
     switch (true) {
-    case SetUp.finalBuild === "Bumper" && me.charlvl >= 40:
+    case SetUp.finalBuild === "Bumper" && me.charlvl >= (Developer.fillAccount.Bumper.Level):
     case (SetUp.finalBuild === "Socketmule" && questCompleted(sdk.quest.id.SiegeOnHarrogath)):
-    case (SetUp.finalBuild === "Imbuemule" && questCompleted(sdk.quest.id.ToolsoftheTrade) && me.charlvl >= Developer.imbueStopLevel):
-      goal = SetUp.finalBuild;
+    case (SetUp.finalBuild === "Imbuemule" && questCompleted(sdk.quest.id.ToolsoftheTrade) && me.charlvl >= Developer.fillAccount.ImbueMules.Level):
+      sharedData.goal = SetUp.finalBuild;
       goalReached = true;
 
       break;
     case SetUp.stopAtLevel && me.charlvl >= SetUp.stopAtLevel:
-      goal = "Level: " + SetUp.stopAtLevel;
+      sharedData.goal = "Level: " + SetUp.stopAtLevel;
       goalReached = true;
 
       break;
@@ -1082,16 +1370,43 @@ const Check = {
 
     if (goalReached) {
       const gameObj = Developer.logPerformance ? Tracker.readObj(Tracker.GTPath) : null;
+      const saveLocation = "logs/Kolbot-SoloPlay/Account-List/" + me.realm + "/" + (me.ladder > 0 ? "Ladder" : "Non-Ladder") + "/" + (me.ladder > 0 ? "L." : "NL.") + sharedData.goal + "s.Acc." + me.account + ".CharList.txt";
+      const textFile = me.account + "/" + me.charname + "/" + me.charlvl + '\n';
+      let isCaseMatched = false;
+
+      const generateLogAndSave = () => {
+        this.generateCharacterLog();
+        FileTools.appendText(saveLocation, textFile);
+        if (!Features.SoloPlayConsole.HideAccLogging) D2Bot.printToConsole("Account & Character Names are saved to: " + saveLocation, sdk.colors.D2Bot.Black);
+        delay(1000 + me.ping);
+      };
 
       switch (true) {
-      case (SetUp.finalBuild === "Bumper" && Developer.fillAccount.bumpers):
-      case (SetUp.finalBuild === "Socketmule" && Developer.fillAccount.socketMules):
-      case (SetUp.finalBuild === "Imbuemule" && Developer.fillAccount.imbueMule):
-        SetUp.makeNext();
-        
-        break;
-      default:
-        D2Bot.printToConsole("Kolbot-SoloPlay " + goal + " goal reached." + (gameObj ? " (" + (Time.format(gameObj.Total + Time.elapsed(gameObj.LastSave))) + ")" : ""), sdk.colors.D2Bot.Gold);
+        case (SetUp.finalBuild === "Bumper"):
+          Town.clearInventory(true); // Clear the inventory
+          if (Developer.fillAccount.Bumper.Logging) generateLogAndSave(); // Check if logging is enabled
+          if (Developer.fillAccount.Bumper.Enabled) SetUp.makeNext(); // Check if "Fill Account" is enabled
+          if (!Developer.fillAccount.Bumper.Enabled) isCaseMatched = true; // If not enabled, set isCaseMatched to true
+
+          break;
+        case (SetUp.finalBuild === "Socketmule"):
+          Town.clearInventory();
+          if (Developer.fillAccount.SocketMules.Logging) generateLogAndSave();
+          if (Developer.fillAccount.SocketMules.Enabled) SetUp.makeNext();
+          if (!Developer.fillAccount.SocketMules.Enabled) isCaseMatched = true;
+
+          break;
+        case (SetUp.finalBuild === "Imbuemule"):
+          Town.clearInventory();
+          if (Developer.fillAccount.ImbueMules.Logging) generateLogAndSave();
+          if (Developer.fillAccount.ImbueMules.Enabled) SetUp.makeNext();
+          if (!Developer.fillAccount.ImbueMules.Enabled) isCaseMatched = true;
+          
+          break;
+      }
+
+      if (isCaseMatched) {
+        if (!Features.SoloPlayConsole.HideGoalAchieved) D2Bot.printToConsole("Kolbot-SoloPlay " + sharedData.goal + " goal reached." + (gameObj ? " (" + (Time.format(gameObj.Total + Time.elapsed(gameObj.LastSave))) + ")" : ""), sdk.colors.D2Bot.Gold);
         Developer.logPerformance && Tracker.update();
         D2Bot.stop();
       }
@@ -1102,9 +1417,7 @@ const Check = {
   usePreviousSocketQuest: function () {
     if (me.classic) return;
     if (!Check.resistance().Status) {
-      if (me.weaponswitch === 0
-        && me.equipped.get(sdk.body.LeftArm).fname.includes("Lidless Wall")
-        && !me.equipped.get(sdk.body.LeftArm).socketed) {
+      if (me.weaponswitch === 0 && me.equipped.get(sdk.body.LeftArm).fname.includes("Lidless Wall") && !me.equipped.get(sdk.body.LeftArm).socketed) {
         if (!me.normal) {
           if (!me.data.normal.socketUsed) goToDifficulty(sdk.difficulty.Normal, " to use socket quest");
           if (me.hell && !me.data.nightmare.socketUsed) goToDifficulty(sdk.difficulty.Nightmare, " to use socket quest");
