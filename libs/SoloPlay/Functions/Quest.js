@@ -6,11 +6,14 @@
 *
 */
 
+// system features
+include("systems/features/Settings.js");
+
 const Quest = {
   preReqs: function () {
     /**
-     * @param {string} task 
-     * @param {function(): boolean} req 
+     * @param {string} task
+     * @param {function(): boolean} req
      * @returns {boolean}
      */
     const getReq = function (task, req = () => true) {
@@ -37,8 +40,8 @@ const Quest = {
   },
 
   /**
-   * @param {number} outcome 
-   * @param  {...number} classids 
+   * @param {number} outcome
+   * @param  {...number} classids
    */
   cubeItems: function (outcome, ...classids) {
     if (me.getItem(outcome)
@@ -104,7 +107,7 @@ const Quest = {
       return Game.getObject(sdk.objects.HoradricStaffHolder);
     });
     if (!orifice) return false;
-    
+
     let hstaff = (
       me.getItem(sdk.items.quest.HoradricStaff)
       || Quest.cubeItems(
@@ -242,7 +245,7 @@ const Quest = {
         Item.autoEquip();
         return false;
       }
-      
+
       if (!questItem.equip(loc)) {
         Pickit.pickItems();
         console.log("ÿc8Kolbot-SoloPlayÿc0: failed to equip " + classid + " .(Quest.equipItem)");
@@ -297,7 +300,7 @@ const Quest = {
 
       if (getTickCount() - tick > Time.seconds(30)) {
         console.warn("Timed out trying to smash quest object");
-        
+
         return false;
       }
 
@@ -312,8 +315,8 @@ const Quest = {
   },
 
   /**
-   * @param {string} npcName 
-   * @param {number | number[]} action 
+   * @param {string} npcName
+   * @param {number | number[]} action
    * @returns {boolean}
    */
   npcAction: function (npcName, action) {
@@ -411,7 +414,7 @@ const Quest = {
 
       let invo = me.findItems(-1, sdk.items.mode.inStorage, sdk.storage.Inventory);
       let slot = item.bodylocation;
-      
+
       // Take note of all the items in the invo minus the item to socket
       for (let i = 0; i < invo.length; i++) {
         if (item.gid !== invo[i].gid) {
@@ -429,7 +432,7 @@ const Quest = {
 
       item = false; // Delete item reference, it's not longer valid anyway
       let items = me.findItems(-1, sdk.items.mode.inStorage, sdk.storage.Inventory);
-        
+
       for (let i = 0; i < items.length; i++) {
         if (invo.indexOf(items[i].x + "/" + items[i].y) === -1) {
           item = items[i];
@@ -441,8 +444,8 @@ const Quest = {
         throw new Error("Failed to socket item");
       }
 
-      Item.logItem("Used my " + sdk.difficulty.nameOf(me.diff) + " socket quest on : ", item, null, true);
-      D2Bot.printToConsole("Kolbot-SoloPlay :: Used my " + sdk.difficulty.nameOf(me.diff) + " socket quest on : " + item.name, sdk.colors.D2Bot.Gold);
+      Item.logItem("Used my " + sdk.difficulty.nameOf(me.diff) + " socket quest on ", item, null, true);
+      if (!Features.SoloPlayConsole.HideSocket) D2Bot.printToConsole("Kolbot-SoloPlay :: Used my " + sdk.difficulty.nameOf(me.diff) + " socket quest on: " + item.name, sdk.colors.D2Bot.Gold);
       CharData.updateData(sdk.difficulty.nameOf(me.diff), "socketUsed", true);
       me.data[sdk.difficulty.nameOf(me.diff).toLowerCase()].socketUsed = true;
       me.update();
@@ -488,7 +491,7 @@ const Quest = {
 
       let invo = me.findItems(-1, sdk.items.mode.inStorage, sdk.storage.Inventory);
       let slot = item.bodylocation;
-      
+
       // Take note of all the items in the invo minus the item to socket
       for (let i = 0; i < invo.length; i++) {
         if (item.gid !== invo[i].gid) {
@@ -506,7 +509,7 @@ const Quest = {
 
       item = false; // Delete item reference, it's not longer valid anyway
       let items = me.findItems(-1, sdk.items.mode.inStorage, sdk.storage.Inventory);
-        
+
       for (let i = 0; i < items.length; i++) {
         if (invo.indexOf(items[i].x + "/" + items[i].y) === -1) {
           item = items[i];
@@ -518,8 +521,8 @@ const Quest = {
         throw new Error("Failed to imbue item");
       }
 
-      Item.logItem("Used my " + sdk.difficulty.nameOf(me.diff) + " imbue quest on : ", item, null, true);
-      D2Bot.printToConsole("Kolbot-SoloPlay :: Used my " + sdk.difficulty.nameOf(me.diff) + " imbue quest on : " + item.name, sdk.colors.D2Bot.Gold);
+      Item.logItem("Used my " + sdk.difficulty.nameOf(me.diff) + " imbue quest on ", item, null, true);
+      if (!Features.SoloPlayConsole.HideImbue) D2Bot.printToConsole("Kolbot-SoloPlay :: Used my " + sdk.difficulty.nameOf(me.diff) + " imbue quest on: " + item.name, sdk.colors.D2Bot.Gold);
       CharData.updateData(sdk.difficulty.nameOf(me.diff), "imbueUsed", true);
       me.data[sdk.difficulty.nameOf(me.diff).toLowerCase()].imbueUsed = true;
       me.update();
@@ -541,7 +544,7 @@ const Quest = {
 
       return false;
     }
-    
+
     return true;
   },
 
@@ -692,10 +695,10 @@ const Quest = {
     }
 
     Misc.checkSocketables();
-    
+
     Town.heal();
     me.cancelUIFlags();
-    
+
     return true;
   },
 };
