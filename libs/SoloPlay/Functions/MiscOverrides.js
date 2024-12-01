@@ -7,6 +7,7 @@
 */
 
 includeIfNotIncluded("core/Misc.js");
+include("systems/features/Settings.js");
 const ShrineData = require("../../core/GameData/ShrineData");
 
 Misc.openChestsEnabled = true;
@@ -655,8 +656,8 @@ Misc.addSocketablesToItem = function (item, runes = []) {
       }
 
       if (item.getItemsEx().length > preSockets) {
-        D2Bot.printToConsole("Added socketable: " + rune.fname + " to " + item.fname, sdk.colors.D2Bot.Gold);
-        Item.logItem("Added " + rune.name + " to: ", item, null, true);
+        if (!Features.SoloPlayConsole.HideSocket) D2Bot.printToConsole("Added socketable: " + rune.fname + " to " + item.fname, sdk.colors.D2Bot.Gold);
+        Item.logItem("Added " + rune.name + " to ", item, null, true);
         preSockets++;
       }
     }

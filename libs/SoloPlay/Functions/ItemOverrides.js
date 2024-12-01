@@ -916,30 +916,10 @@ Item.logItem = function (action, unit, keptLine, force) {
   let name = unit.fname.split("\n").reverse().join(" ").replace(/ÿc[0-9!"+<:;.*]|\/|\\/g, "").trim();
   let desc = (this.getItemDesc(unit) || "");
   let color = (unit.getColor() || -1);
-
-  if (action.match("kept", "i")) {
-    lastArea = DataFile.getStats().lastArea;
-    lastArea && (desc += ("\n\\xffc0Area: " + lastArea));
-  }
-
   const mercCheck = action.match("Merc");
   const hasTier = AutoEquip.hasTier(unit);
   const charmCheck = (unit.isCharm && CharmEquip.check(unit));
   const nTResult = NTIP.CheckItem(unit, NTIP.CheckList) === 1;
-
-  if (!action.match("kept", "i") && !action.match("Shopped") && hasTier) {
-    if (!mercCheck) {
-      if (unit.isCharm) {
-        NTIP.GetCharmTier(unit) > 0 && (desc += ("\n\\xffc0Autoequip charm tier: " + NTIP.GetCharmTier(unit)));
-      } else {
-        let [mainTier, secTier] = [NTIP.GetTier(unit), NTIP.GetSecondaryTier(unit)];
-        mainTier > 0 && (desc += ("\n\\xffc0Autoequip tier: " + mainTier));
-        secTier > 0 && (desc += ("\n\\xffc0Autoequip Secondary tier: " + secTier));
-      }
-    } else {
-      desc += ("\n\\xffc0Autoequip merc tier: " + NTIP.GetMercTier(unit));
-    }
-  }
 
   // should stop logging items unless we wish to see them or it's part of normal pickit
   if (!nTResult && !force) {
@@ -967,10 +947,43 @@ Item.logItem = function (action, unit, keptLine, force) {
     } while (sock.getNext());
   }
 
-  if (keptLine) {
-    keptLine.includes("[") && (keptLine = keptLine.split("[")[0].trim());
-    desc += ("\n\\xffc0Line: " + keptLine);
+  let profileAdded = false;  // flag to check if profile was added
+
+  if (action.match("kept", "i")) {
+    lastArea = DataFile.getStats().lastArea;
+    if (lastArea) {
+      desc += ("\n\\xffc0Area: " + lastArea);
+    }
   }
+
+  if (keptLine) {
+    if (keptLine.includes("[")) {
+        keptLine = keptLine.split("[")[0].trim();
+    }
+    desc += ("\n\\xffc0Line: " + keptLine);
+  } else if (lastArea) {
+    // Area is used but no keptLine
+  }
+
+  if (!action.match("kept", "i") && !action.match("Shopped") && hasTier) {
+    if (!mercCheck) {
+      if (NTIP.GetCharmTier(unit) > 0) {
+        desc += ("\n\\xffc0Auto-Equip Charm Tier: " + NTIP.GetCharmTier(unit));
+      }
+      if (NTIP.GetTier(unit) > 0) {
+        desc += ("\n\\xffc0Auto-Equip Char Tier: " + NTIP.GetTier(unit));
+      }
+    } else {
+      desc += ("\n\\xffc0Auto-Equip Merc Tier: " + NTIP.GetMercTier(unit));
+    }
+  }
+
+  // Add profile information at the very end if it hasn't been added
+  if (!profileAdded) {
+    desc += ("\n" + sdk.colors.Orange + "Profile: " + sdk.colors.NeonGreen + me.profile);
+    profileAdded = true;
+  }
+
   desc += "$" + (unit.getFlag(sdk.items.flags.Ethereal) ? ":eth" : "");
   const formattedDate = new Date().dateStamp().replace(/\//g, "-");
 
@@ -984,7 +997,34 @@ Item.logItem = function (action, unit, keptLine, force) {
     sockets: this.getItemSockets(unit)
   };
 
-  D2Bot.printToItemLog(itemObj);
+  const discordObj = {
+    title: action + " " + name,
+    description: desc,
+    image: code,
+    textColor: unit.quality,
+    itemColor: color,
+    header: "",
+    sockets: this.getItemSockets(unit)
+  };
+
+  switch (true) {
+  case (SetUp.finalBuild === "Start" || "Questing" && !Developer.fillAccount.Bumper.HidePickit):
+    if (!Developer.fillAccount.Bumper.HidePickit) D2Bot.printToItemLog(itemObj);
+    break;
+
+  case (SetUp.finalBuild === "Start" || "Questing" && !Developer.fillAccount.SocketMules.HidePickit):
+    if (!Developer.fillAccount.SocketMules.HidePickit) D2Bot.printToItemLog(itemObj);
+    break;
+
+  case (SetUp.finalBuild === "Start" || "Questing" && !Developer.fillAccount.ImbueMules.HidePickit):
+    if (!Developer.fillAccount.ImbueMules.HidePickit) D2Bot.printToItemLog(itemObj);
+    break;
+
+  default:
+    D2Bot.printToItemLog(itemObj);
+    D2Bot.saveItem(discordObj);
+    break;
+  }
 
   return true;
 };
