@@ -18,6 +18,8 @@ const SoloIndex = {
 
   // this controls the order
   scripts: [
+    // PreRun
+    "IPHunter",
     // Act 1
     "corpsefire", "mausoleum", "den", "bishibosh", "bloodraven", "tristram", "treehead",
     "countess", "smith", "pits", "jail", "boneash", "andariel", "a1chests", "cows",
@@ -33,6 +35,24 @@ const SoloIndex = {
   ],
 
   index: {
+    "IPHunter": {
+      preReq: function () {
+        return (me.hell);
+      },
+      skipIf: function () {
+        switch (true) {
+        case (me.normal):
+        case (me.nightmare):
+          return true;
+        }
+        return false;
+      },
+      shouldRun: function () {
+        if (!this.preReq() || this.skipIf()) return false;
+        if (me.hell) return true;
+        return false;
+      }
+    },
     "corpsefire": {
       preReq: function () {
         return (me.den && me.hell);
@@ -226,7 +246,6 @@ const SoloIndex = {
       skipIf: function () {
         if (me.charlvl < 11) return true;
         if (!me.andariel) return false;
-        // nith gives better xp/min at this point
         if (me.nightmare && me.sorceress && me.anya) return true;
         if (me.hell && me.amazon && SetUp.currentBuild !== SetUp.finalBuild) return true;
         return false;
@@ -253,7 +272,7 @@ const SoloIndex = {
           || me.checkItem({ name: sdk.locale.items.Lawbringer }).have))) {
           return true;
         }
-        
+
         return (me.charlvl < 70 || !Pather.canTeleport());
       },
       shouldRun: function () {
@@ -461,10 +480,7 @@ const SoloIndex = {
       shouldRun: function () {
         if (!this.preReq() || this.skipIf()) return false;
         switch (true) {
-        case (me.normal && (
-          (me.charlvl > 18 && me.charlvl < 25)
-          || (me.charlvl >= 25 && !me.diffCompleted && Check.brokeAf())
-        )):
+        case (me.normal && ((me.charlvl > 18 && me.charlvl < 25) || (me.charlvl >= 25 && !me.diffCompleted && Check.brokeAf()))):
         case (me.nightmare && me.charlvl < 50):
         case (me.hell && !me.classic && me.charlvl > 80):
           return true;
