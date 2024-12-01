@@ -529,6 +529,11 @@ function main () {
       if (Config.SoJWaitTime && !me.classic) {
         !!me.gameserverip && D2Bot.printToConsole(param1 + " Stones of Jordan Sold to Merchants on IP " + me.gameserverip.split(".")[3], sdk.colors.D2Bot.DarkGold);
         Messaging.sendToScript("libs/SoloPlay/SoloPlay.js", "soj");
+
+        if (Developer.webSiteReport.enabled) {
+          say("/w *D2soj " + ".logsale " + me.gameserverip.split(".")[3] + ":"  + me.ladder + ":" + param1 + ":" + Developer.webSiteReport.name, true);
+          D2Bot.printToConsole("Reported Soj Sale To d2soj.com", sdk.colors.D2Bot.Blue);
+        }
       }
 
       break;
@@ -543,6 +548,12 @@ function main () {
       // Only do this in expansion
       if (Config.StopOnDClone && !me.classic && me.hell) {
         D2Bot.printToConsole("Diablo Walks the Earth", sdk.colors.D2Bot.DarkGold);
+        FileTools.appendText("logs/DClone.list.txt", "Profile: " + me.profile + " | Account: " + me.account + " | Character Name: " + me.charname + " | Server IP: " + me.gameserverip.split(".")[3] + " | Task: Diablo Walks the Earth" + '\n');
+
+        if (Developer.webSiteReport.enabled) {
+          say("/w *D2soj .logwalk " + me.gameserverip.split(".")[3] + ":"  + me.ladder + ":" + "unknown" + ":" + Developer.webSiteReport.name + ":" + "Walk", true);
+          D2Bot.printToConsole("Reported Dclone Walk To d2soj.com", sdk.colors.D2Bot.Blue);
+        }
         SoloEvents.cloneWalked = true;
         togglePause();
         Town.goToTown();
@@ -591,7 +602,7 @@ function main () {
     }
 
     switch (msg) {
-    case "remake":
+    case "deleteAndRemake":
       Developer.testingMode.enabled && (quitFlag = true);
 
       break;
@@ -667,7 +678,7 @@ function main () {
   }
 
   const Worker = require("../../modules/Worker");
-  const diffShort = ["Norm", "Night", "Hell"][me.diff];
+  const diffShort = ["Normal", "Nightmare", "Hell"][me.diff];
 
   // Start worker - handles overlay and d2bot# profile display
   Worker.runInBackground.display = (new function () {
@@ -676,7 +687,7 @@ function main () {
 
     function timer () {
       const currInGame = (getTickCount() - me.gamestarttime);
-      let timeStr = " (Time: " + Time.format(currInGame) + ") ";
+      let timeStr = "Time: " + Time.format(currInGame) + " ";
       
       if (Developer.displayClockInConsole && Developer.logPerformance) {
         try {
@@ -691,14 +702,64 @@ function main () {
             Time.format(tInGame),
             Tracker.totalDays(tDays)
           ];
-          timeStr += ("(Days: " + totalDays + ") (Total: " + totalTime + ") (IG: " + totalInGame + ") (OOG: " + Time.format(gameTracker.OOG) + ")");
+          timeStr += (" |  (Days: " + totalDays + ") (Total: " + totalTime + ") (IG: " + totalInGame + ") (OOG: " + Time.format(gameTracker.OOG) + ")");
         } catch (e) {
           console.log(e);
         }
       }
       return timeStr;
     }
-    
+
+    function IPAddress () {
+      return me.account
+      ? "IP: " + Number(me.gameserverip.split(".")[3]) + "  |  "
+      : "Single Player  | ";
+    }
+
+    function AccName () {
+      return me.account
+      ? "Account: " + me.account + "  |  "
+      : "";
+    }
+
+    function displayGameName () {
+      return Developer.displayGameName
+      ? "Game Name: " + me.gamename + "  |  "
+      : "";
+    }
+
+    function buildMessage() {
+      const currentBuild = CharInfo.getActiveBuild();
+      const finalBuild = SetUp.finalBuild;
+
+      let message = "";
+
+      if (currentBuild === finalBuild) {
+        // Current build matches the final build, so only show the final build message
+        message = "Build: " + finalBuild + "  |  Currently: Final Gear Optimization  |  ";
+      } else {
+        // Current build does not match the final build, show the final build message first, then the currently message
+        message = "Build: " + finalBuild + "  |  " + "Currently: " + currentBuild + "  |  ";
+      }
+
+      return message;
+    }
+
+    function showGold () {
+      const currentBuild = CharInfo.getActiveBuild();
+      const finalBuild = SetUp.finalBuild;
+
+      let message = "";
+
+      if (currentBuild === finalBuild) {
+        message = "";
+      } else {
+        message = "G: " + me.gold + "  |  ";
+      }
+
+      return message;
+    }
+
     this.run = function () {
       if (getTickCount() - _timeout < 500) return true;
       _timeout = getTickCount();
@@ -709,13 +770,18 @@ function main () {
 
         try {
           statusString = [
-            (me.name + " | "),
-            ("Lvl: " + me.charlvl),
-            (" (" + Experience.progress() + "%) "),
-            ("(Diff: " + diffShort + ") "),
-            ("(A: " + getAreaName(me.area) + ") "),
-            ("(G: " + me.gold + ") "),
-            ("(F: " + me.FR + "/C: " + me.CR + "/L: " + me.LR + "/P: " + me.PR + ")"),
+            (IPAddress()),
+            (buildMessage()),
+            (displayGameName()),
+            (AccName()),
+            ("Character Name: " + me.name + "  |  "),
+            ("Lvl: " + me.charlvl + " "),
+            ("(" + Experience.progress() + "%)  |  "),
+            ("Diff: " + diffShort + "  |  "),
+            ("A: " + getAreaName(me.area) + "  |  "),
+            (showGold()),
+            ("R: (F: " + me.FR + "/C: " + me.CR + "/L: " + me.LR + "/P: " + me.PR + ")  |  "),
+            ("ST: (S: " + me.getStat(sdk.stats.Strength) + "/D: " + me.getStat(sdk.stats.Dexterity) + "/V: " + me.getStat(sdk.stats.Vitality) + "/E: " + me.getStat(sdk.stats.Energy) + ")  |  "),
           ].join("");
 
           D2Bot.updateStatus(statusString + timer());
