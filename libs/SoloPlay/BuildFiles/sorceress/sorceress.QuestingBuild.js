@@ -1,5 +1,5 @@
 /**
-*  @filename    Sorceress.SteppingBuild.js
+*  @filename    Sorceress.QuestingBuild.js
 *  @author      theBGuy
 *  @desc        Blizzard build for after respecOne and before respecOneB - respecs at 65
 *
@@ -52,19 +52,29 @@
         }
       },
     };
-    
-    // Has to be set after its loaded
-    build.stats = me.classic
-      ? [
-        ["energy", 60], ["vitality", 40], ["strength", 55],
-        ["energy", 80], ["vitality", 80], ["strength", 80],
-        ["energy", 100], ["vitality", "all"]
-      ] : [
+
+    // Adjust stats if the final build is MFBuild
+    if (SetUp.finalBuild === "MF") {
+      print(sdk.colors.Yellow + "Using MF Build Stats");
+      build.stats = [
         ["energy", 69], ["strength", 48], ["vitality", 165],
-        ["strength", 61], ["vitality", 200], ["strength", 100],
-        ["vitality", 252], ["dexterity", "block"], ["vitality", "all"]
+        ["strength", 61], ["vitality", 171], ["strength", 156],
+        ["strength", 156], ["dexterity", 204], ["vitality", "all"]
       ];
-    
+    } else {
+    // Has to be set after its loaded
+      build.stats = me.classic
+        ? [
+          ["energy", 60], ["vitality", 40], ["strength", 55],
+          ["energy", 80], ["vitality", 80], ["strength", 80],
+          ["energy", 100], ["vitality", "all"]
+        ] : [
+          ["energy", 69], ["strength", 48], ["vitality", 165],
+          ["strength", 61], ["vitality", 200], ["strength", 100],
+          ["vitality", 252], ["dexterity", "block"], ["vitality", "all"]
+        ];
+    }
+
     build.skills = me.classic
       ? [
         // Total skills at respec = 27 (assume no izual quest points)
@@ -91,15 +101,14 @@
         [sdk.skills.ColdMastery, 1, false],
         [sdk.skills.FrozenOrb, 1, false],
         [sdk.skills.Blizzard, 20, false],
-        [sdk.skills.ChainLightning, 1],
-        [sdk.skills.LightningMastery, 1],
-        [sdk.skills.Lightning, 5, false],
-        [sdk.skills.LightningMastery, 20],
+        [sdk.skills.IceBlast, 20, false],
+        [sdk.skills.ColdMastery, 5],
+        [sdk.skills.GlacialSpike, 20, false],
         // [sdk.skills.IceBlast, 20, false],
         // [sdk.skills.ColdMastery, 5],
         // [sdk.skills.GlacialSpike, 20, false],
       ];
-    
+
     return build;
   })();
 })(module);

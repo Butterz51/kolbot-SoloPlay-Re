@@ -34,7 +34,8 @@ const CharInfo = {
       return "Start";
     case currLevel >= this.respecOne && currLevel < this.respecTwo && justRepeced:
     case currLevel >= this.respecOne && currLevel < this.respecTwo && me.checkSkill(sdk.skills.Blizzard, sdk.skills.subindex.HardPoints) && !me.checkSkill(sdk.skills.Nova, sdk.skills.subindex.HardPoints) && !me.checkSkill(sdk.skills.FireMastery, sdk.skills.subindex.HardPoints):
-      return "Stepping";
+    case me.diff === sdk.difficulty.Hell && !sdk.areas.Harrogath && sdk.quest.id.EyeofDestruction === sdk.quest.states.GreyedOut:
+      return "Questing";
     case Check.finalBuild().respec() && justRepeced:
     case Check.finalBuild().active():
       return SetUp.finalBuild;
