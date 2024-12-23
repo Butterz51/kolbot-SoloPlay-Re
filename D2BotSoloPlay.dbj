@@ -13,7 +13,7 @@ include("critical.js"); // required
 // D2BotSoloPlay specific settings - for global settings see libs/starter/StarterConfig.js
 Starter.Config.InvalidPasswordDelay = 10; // Minutes to wait after getting Invalid Password message
 Starter.Config.GameDoesNotExistTimeout = 600; // Seconds to wait before cancelling the 'Game does not exist.' screen
-Starter.Config.DelayBeforeLogin = rand(5, 25); // Seconds to wait before logging in
+Starter.Config.DelayBeforeLogin = 25; // rand(5, 25); // Seconds to wait before logging in
 Starter.Config.VersionErrorDelay = rand(5, 30); // Seconds to wait after 'unable to identify version' message
 
 // Override default values for StarterConfig under here by following format
@@ -53,12 +53,12 @@ if (!FileTools.exists("data/" + me.profile + ".json") && DataFile.create()) {
 !FileTools.exists(CharData.login.filePath) && CharData.login.create();
 Developer.logPerformance && Tracker.initialize();
 
-/** 
-* Calculate minGameTime based on individual profiles and their associated IP count
-* Invokes the calculateAndSetMinGameTime() function from Developer.js
-* Checks whether the maximum allowed IPs is below 8, and then determines the time accordingly
-* Utilizes data from either the array values or static values in Developer.js
-*/
+/**
+ * Calculate minGameTime based on individual profiles and their associated IP count
+ * Invokes the calculateAndSetMinGameTime() function from Developer.js
+ * Checks whether the maximum allowed IPs is below 8, and then determines the time accordingly
+ * Utilizes data from either the array values or static values in Developer.js
+ */
 const minGameTime = calculateAndSetMinGameTime();
 let profileArray = Developer.ProfilesPerIP.ProfilesArray.find(profile => profile.ProfileName.toUpperCase() === me.profile.toUpperCase());
 let numProfiles = profileArray ? profileArray.IP : Developer.ProfilesPerIP.StaticProfiles;
@@ -96,7 +96,6 @@ function main () {
   if (Starter.gameInfo.error) {
     validateProfileIP(numProfiles);
     ControlAction.timeoutDelay("Crash Delay  |  Waiting:", minGameTime * 1e3);
-    //ControlAction.timeoutDelay("Crash Delay  |  Waiting:", Starter.Config.CrashDelay * 1e3);
     Starter.BNET && D2Bot.updateRuns();
   }
 
@@ -119,6 +118,8 @@ function main () {
           Starter.gameStart = getTickCount();
           Starter.lastGameStatus = "ingame";
           Starter.inGame = true;
+          Starter.FTJCount = 0;
+          console.log(sdk.colors.Orange + "FTJ System" + sdk.colors.White + "  ::  " + sdk.colors.NeonGreen + "Consecutive FTJ Count Reset To: " + sdk.colors.White + "0");
           DataFile.updateStats("runs", Starter.gameCount);
           DataFile.updateStats("ingameTick");
           Developer.logPerformance && Tracker.update((getTickCount() - oogTick));
@@ -146,14 +147,7 @@ function main () {
     // was in game so start recording oog time
     Starter.inGame && oogTick === 0 && (oogTick = getTickCount());
     Starter.isUp = "no";
-/*
-    try {
-      let loc = getLocation();
-      (locations[loc] !== undefined) && locations[loc](loc);
-    } catch (e) {
-      console.error(e, "LOCATION: " + getLocation());
-    }
-*/
+
     LocationAction.run();
     delay(1000);
   }

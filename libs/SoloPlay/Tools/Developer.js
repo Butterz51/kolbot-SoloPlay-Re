@@ -21,7 +21,7 @@ const Developer = {
     Name: "", // Set a global character name. (MAX Characters 12 plus Suffix Length)
     // @desc - Game info to use
     GSLabel: false, // Added the Global Settings Label before the game name.
-    GameName: "", // Game Name + the profile number will be added to the end of whatever you put here 
+    GameName: "", // Game Name + the profile number will be added to the end of whatever you put here
     GamePass: "" // Game Password
   },
   // @desc - Set the number of profiles sharing the same IP in this file
@@ -29,18 +29,19 @@ const Developer = {
     StaticProfiles: 1, // Change this value as needed (Max amount 8 profiles per IP).
     // Array of profiles with the corresponding number of IPs being used
     ProfilesArray: [
-      //{ ProfileName: "SCL-SORC-101", IP: 2 },
-      //{ ProfileName: "SCL-SORC-102", IP: 2 }
+      //{ ProfileName: "SCL-PAL-001", IP: 2 },
       // Add more profiles here as needed
     ],
   },
   // @desc - set to true if you want to report to https://d2soj.com for soj sales/Dclone walks
   webSiteReport: {
-    enabled: true,
-    name: "JBH", // Name to report on site
+    enabled: false,
+    name: "", // Name to report on site
   },
   consecutiveFTJ: {
-    count: 2
+    count: 2,
+    delay: 10,
+    stopAfter: 5
   },
   // @desc - set to true if using the PlugY mod - allows use of larger stash
   plugyMode: false,
@@ -73,15 +74,17 @@ const Developer = {
       Logging: true, // Enable logging of the account and character names in a txt file
       Enabled: true, // Fill account (See Count)
       Level: 40, // Set stop level for bumpers (20 Normal, 40 Nightmare, 60 Hell)
-      Count: 10, // Number of character to fill on account (MAX 18)
-      //HidePickit: true, // Set to false to allow items to be logged in the ItemLog
+      Count: 18, // Number of character to fill on account (MAX 18)
+      HidePickit: true, // Set to false to allow items to be logged in the ItemLog
+      HideDiscordPickit: true, // Set to false to allow items to be logged to discord
       NextAccount: true, // Create a new account once the first account reaches its maximum character count or the specified limit
     },
     SocketMules: {
       Logging: true, // Enable logging of the account and character names in a txt file
       Enabled: true, // Fill account (See Count)
       Count: 18, // Number of character to create on account (MAX 18)
-      //HidePickit: true, // Set to false to allow items to be logged in the ItemLog
+      HidePickit: true, // Set to false to allow items to be logged in the ItemLog
+      HideDiscordPickit: true, // Set to false to allow items to be logged to discord
       NextAccount: true, // Create a new account once the first account reaches its maximum character count or the specified limit
     },
     ImbueMules: {
@@ -89,7 +92,8 @@ const Developer = {
       Enabled: false, // Fill account (See Count)
       Level: 30, // Set stop level for imbueMule
       Count: 18, // Number of character to create on account (MAX 18)
-      //HidePickit: true, // Set to false to allow items to be logged in the ItemLog
+      HidePickit: true, // Set to false to allow items to be logged in the ItemLog
+      HideDiscordPickit: true, // Set to false to allow items to be logged to discord
       NextAccount: false, // Create a new account once the first account reaches its maximum character count or the specified limit
     },
   },
@@ -158,7 +162,7 @@ if (Developer.developerMode.enabled && Developer.developerMode.profiles.some(pro
 
 function calculateAndSetMinGameTime () {
   const maxAllowedProfilesPerIP = 8; // Maximum number of allowed profiles per single IP address
-  
+
   try {
     const profilesArray = Developer.ProfilesPerIP.ProfilesArray;
     const profileInArray = profilesArray.find(profile => profile.ProfileName.toUpperCase() === me.profile.toUpperCase());
@@ -200,6 +204,15 @@ function calculateAndSetMinGameTime () {
  *
  * @param {number} numProfiles - The number of profiles sharing the same IP address.
  * @returns {number} The calculated minimum game time.
+ * 
+ * @desc Time / Profiles / Time - Time | Time - Time + 94 / Time
+ * @desc 1200     2           540           540             1200
+ * @desc 1800     3           600           634             1834
+ * @desc 2100     4           300           728             2562
+ * @desc 2700     5           600           822             3384
+ * @desc 3315     6           615           916             4300
+ * @desc 3930     7           615           1010            5310
+ * @desc 4545     8           615           1104            6414
  */
 
 function calculateMinGameTime (numProfiles) {
@@ -207,16 +220,20 @@ function calculateMinGameTime (numProfiles) {
   const maxAllowedProfilesPerIP = 8;
 
   // Default Game Time Configuration
-  const defaultMinGameTime = 600; // Default game duration (in seconds) for a single profile on one IP address (Super Safe 11 minutes)
-
+  const defaultMinGameTime = 660; // Default game duration (in seconds) for a single profile on one IP address (Super Safe 11 minutes)
   // Calculate additional game time based on the number of profiles
-  const additionalMinGameTimePerProfile = numProfiles >= 2 && numProfiles < 3 ? 300 : 0; // Adds 5 minutes (300 seconds) for each extra profile (Max 2 Profiles)
-  const additionalProfileTimeSmallGroup = numProfiles >= 3 && numProfiles < 4 ? 900 : 0; // Adds 15 minutes (900 seconds) for smaller groups (Max 3 Profiles)
-  const additionalProfileTimeLargeGroup = numProfiles >= 4 && numProfiles < 8 ? 1500 : 0; // Adds 25 minutes (1500 seconds) for larger groups (Max 4-8 Profiles)
+  const extraGameTimeSmallPair = numProfiles >= 2 && numProfiles < 3 ? 540 : 0; // Adds 20 minutes (1200 seconds total) for 2 profiles
+  const extraGameTimeSmallGroup = numProfiles >= 3 && numProfiles < 4 ? 634 : 0; // Adds 30 minutes and 34 seconds (1834 seconds total) for 3 profiles
+  const extraGameTimeMediumGroup = numProfiles >= 4 && numProfiles < 5 ? 728 : 0; // Adds 42 minutes and 42 seconds (2562 seconds total) for 4 profiles
+  const extraGameTimeLargeGroup = numProfiles >= 5 && numProfiles < 6 ? 822 : 0; // Adds 56 minutes and 24 seconds (3384 seconds total) for 5 profiles
+  const extraGameTimeXLargeGroup = numProfiles >= 6 && numProfiles < 7 ? 916 : 0; // Adds 1 hour, 11 minutes, and 40 seconds (4300 seconds total) for 6 profiles
+  const extraGameTimeXXLargeGroup = numProfiles >= 7 && numProfiles < 8 ? 1010 : 0; // Adds 1 hour, 28 minutes, and 30 seconds (5310 seconds total) for 7 profiles
+  const extraGameTimeMaxGroup = numProfiles >= 8 && numProfiles < 9 ? 1104 : 0; // Adds 1 hour, 46 minutes, and 54 seconds (6414 seconds total) for 8 profiles
+
 
   // Calculate the MinGameTime using the configured settings
   const clampedNumProfiles = Math.min(numProfiles, maxAllowedProfilesPerIP);
-  const additionalTime = (clampedNumProfiles - 1) * additionalMinGameTimePerProfile + additionalProfileTimeSmallGroup + additionalProfileTimeLargeGroup;
+  const additionalTime = (clampedNumProfiles - 1) * extraGameTimeSmallPair + extraGameTimeSmallGroup + extraGameTimeMediumGroup + extraGameTimeLargeGroup + extraGameTimeXLargeGroup + extraGameTimeXXLargeGroup + extraGameTimeMaxGroup;
 
   // Calculate the final minimum game time
   const minGameTime = defaultMinGameTime + additionalTime;
@@ -240,13 +257,13 @@ function validateProfileIP(numProfiles) {
   let errorMsg = "";
 
   if (numProfiles > maxAllowedValue || numProfiles < minNotAllowed) {
-    errorMsg = 
+    errorMsg =
       (
         profileInArray
           ? "The value exceeds the allowable limits. For the profile " + profileInArray.ProfileName + ", which has an associated IP value of " + profileInArray.IP
           : "The value exceeds the allowable static limits."
       )
-      + (numProfiles > maxAllowedValue 
+      + (numProfiles > maxAllowedValue
           ? " The maximum allowable limit is " + maxAllowedValue + ". Using the default value of 3 minutes."
           : " The minimum allowable limit is 1. Using the default value of 3 minutes."
       );

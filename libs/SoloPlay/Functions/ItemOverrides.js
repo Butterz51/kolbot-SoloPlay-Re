@@ -8,6 +8,7 @@
 
 includeIfNotIncluded("core/Item.js");
 includeIfNotIncluded("SoloPlay/Functions/ItemPrototypes.js");
+include("systems/features/Settings.js");
 
 Item.weaponTypes = [
   sdk.items.type.Scepter, sdk.items.type.Wand,
@@ -30,7 +31,7 @@ Item.helmTypes = [
 ];
 
 /**
- * @param {ItemUnit} item 
+ * @param {ItemUnit} item
  */
 Item.hasDependancy = function (item) {
   switch (item.itemType) {
@@ -45,7 +46,7 @@ Item.hasDependancy = function (item) {
 };
 
 /**
- * @param {ItemUnit} item 
+ * @param {ItemUnit} item
  */
 Item.identify = function (item) {
   if (item.identified) return true;
@@ -59,7 +60,7 @@ Item.identify = function (item) {
 };
 
 /**
- * @param {ItemUnit} item 
+ * @param {ItemUnit} item
  */
 Item.getBodyLoc = function (item) {
   if (!item || item.isInsertable) return [];
@@ -94,7 +95,7 @@ Item.getBodyLoc = function (item) {
 };
 
 /**
- * @param {ItemUnit} item 
+ * @param {ItemUnit} item
  */
 Item.canEquip = function (item) {
   if (!item || item.type !== sdk.unittype.Item || !item.identified) return false;
@@ -107,8 +108,8 @@ Item.canEquip = function (item) {
 };
 
 /**
- * @param {ItemUnit} item 
- * @param {boolean} basicCheck 
+ * @param {ItemUnit} item
+ * @param {boolean} basicCheck
  */
 Item.autoEquipCheck = function (item, basicCheck = false) {
   if (!Config.AutoEquip) return true;
@@ -146,7 +147,7 @@ Item.autoEquipCheck = function (item, basicCheck = false) {
         return true;
       } else {
         /**
-         * @param {ItemUnit} item 
+         * @param {ItemUnit} item
          * @returns {boolean}
          */
         const checkForBetterItem = function (item) {
@@ -190,7 +191,7 @@ Item.autoEquipCheck = function (item, basicCheck = false) {
 };
 
 /**
- * @param {string} task 
+ * @param {string} task
  */
 Item.autoEquip = function (task = "") {
   if (!Config.AutoEquip) return true;
@@ -220,9 +221,9 @@ Item.autoEquip = function (task = "") {
   };
 
   /**
-   * @param {ItemUnit} item 
-   * @param {number} bodyLoc 
-   * @param {number} tier 
+   * @param {ItemUnit} item
+   * @param {number} bodyLoc
+   * @param {number} tier
    */
   const runEquip = function (item, bodyLoc, tier) {
     let gid = item.gid;
@@ -306,13 +307,13 @@ Item.autoEquip = function (task = "") {
           if (!runEquip(item, loc, tier)) {
             continue;
           }
-          
+
           break;
         }
       } else {
         if (tier > equippedItem.tier) {
           console.debug("EquippedItem :: " + equippedItem.prettyPrint + " |ÿc0 Tier: " + equippedItem.tier);
-          
+
           if (item.twoHanded && !me.barbarian) {
             if (tier < me.equipped.get(sdk.body.RightArm).tier + me.equipped.get(sdk.body.LeftArm).tier) {
               continue;
@@ -344,8 +345,8 @@ Item.autoEquip = function (task = "") {
 };
 
 /**
- * @param {ItemUnit} item 
- * @param {number} bodyLoc 
+ * @param {ItemUnit} item
+ * @param {number} bodyLoc
  */
 Item.equip = function (item, bodyLoc) {
   // can't equip - @todo handle if it's one of our final items and we can equip it given the stats of our other items
@@ -477,14 +478,14 @@ Item.removeItem = function (bodyLoc = -1, item = undefined) {
 };
 
 /**
- * @param {ItemUnit} item 
+ * @param {ItemUnit} item
  */
 Item.hasSecondaryTier = function (item) {
   return Config.AutoEquip && me.expansion && NTIP.GetSecondaryTier(item) > 0;
 };
 
 /**
- * @param {ItemUnit} item 
+ * @param {ItemUnit} item
  */
 Item.getSecondaryBodyLoc = function (item) {
   if (Item.shieldTypes.includes(item.itemType)) return [sdk.body.LeftArmSecondary];
@@ -502,8 +503,8 @@ Item.getSecondaryBodyLoc = function (item) {
 };
 
 /**
- * @param {ItemUnit} item 
- * @param {11 | 12} bodyLoc 
+ * @param {ItemUnit} item
+ * @param {11 | 12} bodyLoc
  */
 Item.secondaryEquip = function (item, bodyLoc) {
   if (!this.canEquip(item) && me.expansion) return false;
@@ -525,7 +526,7 @@ Item.secondaryEquip = function (item, bodyLoc) {
           if ([sdk.items.type.Bow, sdk.items.type.AmazonBow, sdk.items.type.Crossbow].includes(item.itemType)) {
             CharData.skillData.bow.setBowInfo(item);
           }
-          
+
           if (getCursorType() === 3) {
             let cursorItem = Game.getCursorUnit();
             !!cursorItem && !cursorItem.shouldKeep() && cursorItem.drop();
@@ -543,7 +544,7 @@ Item.secondaryEquip = function (item, bodyLoc) {
 };
 
 /**
- * @param {ItemUnit} item 
+ * @param {ItemUnit} item
  */
 Item.autoEquipCheckSecondary = function (item) {
   if (!Config.AutoEquip) return true;
@@ -564,7 +565,7 @@ Item.autoEquipCheckSecondary = function (item) {
 };
 
 /**
- * @param {string} task 
+ * @param {string} task
  */
 Item.autoEquipSecondary = function (task = "") {
   if (!Config.AutoEquip || me.classic) return true;
@@ -628,13 +629,13 @@ Item.autoEquipSecondary = function (task = "") {
 };
 
 /**
- * @param {ItemUnit} item 
+ * @param {ItemUnit} item
  */
 Item.hasMercTier = (item) => Config.AutoEquip && me.expansion && NTIP.GetMercTier(item) > 0;
 
 /**
- * @param {ItemUnit} item 
- * @param {number} bodyLoc 
+ * @param {ItemUnit} item
+ * @param {number} bodyLoc
  * @todo re-work using char data so we can shop/keep items if merc is dead *but* we have enough to revive him and buy the item and enough space
  */
 Item.canEquipMerc = function (item, bodyLoc) {
@@ -656,8 +657,8 @@ Item.canEquipMerc = function (item, bodyLoc) {
 };
 
 /**
- * @param {ItemUnit} item 
- * @param {number} bodyLoc 
+ * @param {ItemUnit} item
+ * @param {number} bodyLoc
  */
 Item.equipMerc = function (item, bodyLoc) {
   let mercenary = me.getMercEx();
@@ -733,7 +734,7 @@ Item.getMercEquipped = function (bodyLoc = -1) {
 };
 
 /**
- * @param {ItemUnit} item 
+ * @param {ItemUnit} item
  * @returns {number[]}
  */
 Item.getBodyLocMerc = function (item) {
@@ -771,8 +772,8 @@ Item.getBodyLocMerc = function (item) {
 };
 
 /**
- * @param {ItemUnit} item 
- * @param {boolean} basicCheck 
+ * @param {ItemUnit} item
+ * @param {boolean} basicCheck
  */
 Item.autoEquipCheckMerc = function (item, basicCheck = false) {
   if (!Config.AutoEquip) return true;
@@ -837,7 +838,7 @@ Item.autoEquipMerc = function () {
 
         console.log("Merc " + name);
         this.equipMerc(item, loc) && console.log("ÿc9MercEquipÿc0 :: Equipped: " + name + " MercTier: " + tier);
-        
+
         let cursorItem = Game.getCursorUnit();
 
         if (cursorItem) {
@@ -880,14 +881,14 @@ Item.removeItemsMerc = function () {
 
 /**
  * Log kept item stats in the manager.
- * @param {string} action 
- * @param {ItemUnit} unit 
- * @param {string} keptLine 
- * @param {boolean} force 
+ * @param {string} action
+ * @param {ItemUnit} unit
+ * @param {string} keptLine
+ * @param {boolean} force
  */
 Item.logItem = function (action, unit, keptLine, force) {
   if (!this.useItemLog || unit === undefined || !unit || !unit.fname) return false;
-  
+
   const keys = ["pk1", "pk2", "pk3"];
   const organs = ["dhn", "bey", "mbr"];
   const lowRunes = ["r01", "r02", "r03", "r04", "r05", "r06", "r07", "r08", "r09", "r10", "r11", "r12", "r13", "r14"];
@@ -1006,18 +1007,26 @@ Item.logItem = function (action, unit, keptLine, force) {
     header: "",
     sockets: this.getItemSockets(unit)
   };
-
+// SetUp.finalBuild === "Start" || "Questing" && Developer.fillAccount.ImbueMules.HidePickit || Developer.fillAccount.ImbueMules.HideDiscordPickit
   switch (true) {
-  case (SetUp.finalBuild === "Start" || "Questing" && !Developer.fillAccount.Bumper.HidePickit):
+  case SetUp.finalBuild === "Bumper":
     if (!Developer.fillAccount.Bumper.HidePickit) D2Bot.printToItemLog(itemObj);
+    if (!Developer.fillAccount.Bumper.HideDiscordPickit) D2Bot.saveItem(discordObj);
     break;
 
-  case (SetUp.finalBuild === "Start" || "Questing" && !Developer.fillAccount.SocketMules.HidePickit):
+  case SetUp.finalBuild === "Socketmule":
     if (!Developer.fillAccount.SocketMules.HidePickit) D2Bot.printToItemLog(itemObj);
+    if (!Developer.fillAccount.SocketMules.HideDiscordPickit) D2Bot.saveItem(discordObj);
     break;
 
-  case (SetUp.finalBuild === "Start" || "Questing" && !Developer.fillAccount.ImbueMules.HidePickit):
+  case SetUp.finalBuild === "Imbuemule":
     if (!Developer.fillAccount.ImbueMules.HidePickit) D2Bot.printToItemLog(itemObj);
+    if (!Developer.fillAccount.ImbueMules.HideDiscordPickit) D2Bot.saveItem(discordObj);
+    break;
+
+  case (SetUp.finalBuild === "Start" || "Questing" && (!Features.SoloPlayConsole.HidePickit)):
+    D2Bot.printToItemLog(itemObj);
+    D2Bot.saveItem(discordObj);
     break;
 
   default:
@@ -1031,7 +1040,7 @@ Item.logItem = function (action, unit, keptLine, force) {
 
 const AutoEquip = {
   /**
-   * @param {ItemUnit} item 
+   * @param {ItemUnit} item
    */
   hasTier: function (item) {
     if (me.classic) return Item.hasTier(item);
@@ -1042,7 +1051,7 @@ const AutoEquip = {
   },
 
   /**
-   * @param {ItemUnit} item 
+   * @param {ItemUnit} item
    */
   wanted: function (item) {
     if (me.classic) return Item.autoEquipCheck(item, true);

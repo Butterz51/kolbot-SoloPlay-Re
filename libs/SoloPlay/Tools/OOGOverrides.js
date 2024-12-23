@@ -33,7 +33,7 @@ const LocationAction = {
 
 (function () {
   let joinInfo;
-  
+
   Starter.Config.StopOnDeadHardcore = false;
   const Controls = require("../../modules/Control");
   const Overrides = require("../../modules/Override");
@@ -206,7 +206,7 @@ const LocationAction = {
     }
   };
 
-   /** 
+   /**
    * Calculate minGameTime based on individual profiles and their associated IP count
    * Invokes the calculateAndSetMinGameTime() function from Developer.js
    * Checks whether the maximum allowed IPs is below 8, and then determines the time accordingly
@@ -215,49 +215,6 @@ const LocationAction = {
   const minGameTime = calculateAndSetMinGameTime();
   let profileArray = Developer.ProfilesPerIP.ProfilesArray.find(profile => profile.ProfileName.toUpperCase() === me.profile.toUpperCase());
   let numProfiles = profileArray ? profileArray.IP : Developer.ProfilesPerIP.StaticProfiles;
-
-  ControlAction.SoftRestart = function (msg) {
-    // Click the "Quit" button in the lobby to start the logout process
-    Controls.LobbyQuit.click();
-    delay(100);
-    // Click the "Exit" button located at the bottom left to completely exit the interface
-    Controls.BottomLeftExit.click();
-    // Reset on a successful game creation
-    Starter.consecutiveFTJCount = 0;
-    // Set a timeout delay combining the minimum game time with an additional 11 minutes.
-    // This delay helps avoid hitting the maximum number of game creations per day and reduces
-    // the frequency of restarts, decreasing the likelihood of detection.
-    ControlAction.timeoutDelay(msg + "  |  Soft-Restart:", minGameTime + 660 * 1e3);
-    // Re-login after the delay
-    Starter.LocationEvents.login();
-  };
-
-  // Function to handle FTJ (Failed to Join) scenarios
-  ControlAction.handleFTJ = function () {
-    Starter.isUp = "no";
-    Starter.consecutiveFTJCount++;
-
-    // Function to handle consecutive FTJ scenarios
-    const handleConsecutiveFTJ = function () {
-      D2Bot.printToConsole("Restarting Profile Due To Consecutive FTJ Issues (FTJ Count: " + Starter.consecutiveFTJCount + ")", sdk.colors.D2Bot.Red);
-      ControlAction.timeoutDelay("FTJ Delay | Soft Restart:", 15 * 1e3);
-      ControlAction.SoftRestart("Delaying Reconnection To Avoid Exceeding Game Creation Limits");
-      D2Bot.updateRuns();
-    };
-
-    // Function to log FTJ and set delay
-    const basicFTJ = function () {
-      D2Bot.printToConsole("Failed To Join/Create Game (FTJ Count: " + Starter.consecutiveFTJCount + ")", sdk.colors.D2Bot.Black);
-      ControlAction.timeoutDelay("FTJ Delay | Waiting:", minGameTime * 1e3);
-      D2Bot.updateRuns();
-    };
-
-    if (Starter.consecutiveFTJCount === Developer.consecutiveFTJ.count) {
-      handleConsecutiveFTJ();
-    } else {
-      basicFTJ();
-    }
-  };
 
   /**
    * @typedef {Object} CharInfo
@@ -272,7 +229,7 @@ const LocationAction = {
    */
 
   /**
-   * @param {CharInfo} info 
+   * @param {CharInfo} info
    * @returns {boolean}
    */
   ControlAction.makeCharacter = function (info) {
@@ -385,7 +342,7 @@ const LocationAction = {
   };
 
   /**
-   * @param {CharInfo} info 
+   * @param {CharInfo} info
    * @returns {Control}
    */
   ControlAction.findCharacter = function (info) {
@@ -467,7 +424,7 @@ const LocationAction = {
   };
 
   /**
-   * @param {CharInfo} info 
+   * @param {CharInfo} info
    * @param {boolean} startFromTop
    * @returns {boolean}
    */
@@ -542,7 +499,7 @@ const LocationAction = {
 
   /**
    * @todo add open bnet check
-   * @param {CharInfo} info 
+   * @param {CharInfo} info
    * @returns {boolean}
    */
   ControlAction.makeAccount = function (info) {
@@ -642,7 +599,7 @@ const LocationAction = {
   };
 
   /**
-   * @param {CharInfo} info 
+   * @param {CharInfo} info
    * @returns {boolean}
    */
   ControlAction.deleteAndRemakeChar = function (info) {
@@ -663,7 +620,7 @@ const LocationAction = {
   };
 
   /**
-   * @param {CharInfo} info 
+   * @param {CharInfo} info
    * @returns {void}
    */
   ControlAction.saveInfo = function (info) {
@@ -690,7 +647,7 @@ const LocationAction = {
   };
 
   /**
-   * @param {CharInfo} info 
+   * @param {CharInfo} info
    * @returns {boolean}
    */
   ControlAction.loginAccount = function (info) {
@@ -747,7 +704,7 @@ const LocationAction = {
         case sdk.game.locations.LobbyChat:
           // somehow we are in the lobby?
           Control.LobbyQuit.click();
-          
+
           break;
         default:
           console.log(getLocation());
@@ -813,7 +770,7 @@ const LocationAction = {
 
     switch (true) {
     case (characterCount < developerInfoTag.Count):
-      print("CHECK TEST :: case (characterCount < developerInfoTag.Count)")
+      print("CHECK TEST :: case (characterCount < developerInfoTag.Count)");
       ControlAction.makeCharacter(Starter.profileInfo);
       break;
 
@@ -837,6 +794,8 @@ const LocationAction = {
       D2Bot.stop();
       break;
 
+    default:
+      return;
     }
   };
 
@@ -906,7 +865,7 @@ const LocationAction = {
 
               return this.readAcc();
             }
-            
+
             // File exists but doesn't contain valid info - Remaking .json file.
             if (AccountName && jsonObj.Account !== AccountName) {
               print(sdk.colors.DarkGreen + "Global Settings" + sdk.colors.White + " :: " + sdk.colors.Red + "Removed Save Location.");
@@ -982,7 +941,6 @@ const LocationAction = {
   Starter.generateAccountInfo = function () {
     if (Developer.GlobalSettings.Account || Developer.GlobalSettings.Password) {
       Starter.profileInfo.account = Developer.GlobalSettings.Account.length > 0 ? Starter.getGlobalAccount() : Starter.randomString(12, true);
-      //Starter.profileInfo.account = Developer.GlobalSettings.Account.length > 0 ? globalAccount : Starter.randomString(12, true);
       Starter.profileInfo.password = Developer.GlobalSettings.Password.length > 0 ? Developer.GlobalSettings.Password : Starter.randomString(12, true);
 
       try {
@@ -1033,7 +991,7 @@ const LocationAction = {
       let realmControl = !!Controls.CharSelectCurrentRealm.control;
       if ((spCheck && !realmControl) || ((!spCheck && realmControl))) {
         Controls.BottomLeftExit.click();
-        
+
         return;
       }
     }
@@ -1042,7 +1000,7 @@ const LocationAction = {
     if (Starter.firstLogin && getLocation() === sdk.game.locations.Login) {
       Controls.BottomLeftExit.click();
     }
-          
+
     D2Bot.updateStatus(D2Bot.LoginStatus());
 
     try {
@@ -1053,7 +1011,6 @@ const LocationAction = {
         // existing account
         if (Starter.profileInfo.account !== "") {
           try {
-            // ControlAction.loginAccount(Starter.profileInfo);
             login(me.profile);
           } catch (error) {
             if (DataFile.getStats().AcctPswd) {
@@ -1119,8 +1076,8 @@ const LocationAction = {
                 break;
 
               default:
-                print("CHECK TEST :: Default Line: 1122");
                 ControlAction.makeCharacter(Starter.profileInfo);
+                break;
               }
             }
           }
@@ -1132,6 +1089,118 @@ const LocationAction = {
   };
 
   Starter.accountExists = false;
+
+  /**
+   * Logs messages in a standard format for the SoftRestart function.
+   * @param {string} message - The message to log.
+   * @param {"error" | "warning"} [type] - The severity of the message:
+   *   - "error": A critical failure requiring attention.
+   *   - "warning": A potential issue or delay.
+   *   If not specified, the message is treated as general information.
+   */
+  function logSoftRestartMessage (message, type = "info") {
+    const prefix = sdk.colors.Orange + "SoftRestart" + sdk.colors.White + " :: ";
+    const color =
+      type === "error" ? sdk.colors.Red :
+      type === "warning" ? sdk.colors.Yellow : sdk.colors.Green;
+    console.log(prefix + color + message);
+  };
+
+  //if ([sdk.game.locations.CreateGame].includes(getLocation())) break; // Array Call
+  /**
+   * Performs a soft restart of the bot.
+   * This involves exiting the game, applying delays, and reinitializing for a fresh start.
+   *
+   * @param {string} [msg=""] - An optional message to include in the status update.
+   *   Messages are displayed as plain text without color formatting.
+   */
+  function SoftRestart(msg) {
+    logSoftRestartMessage("Initiated.", "info");
+    delay(500);
+
+    MainLoop:
+    if (getLocation() !== sdk.game.locations.MainMenu) {
+      while (true) {
+        const location = getLocation();
+
+        switch (location) {
+          case sdk.game.locations.CreateGame:
+          case sdk.game.locations.Lobby:
+          case sdk.game.locations.LobbyChat:
+          case sdk.game.locations.LobbyPleaseWait:
+          case sdk.game.locations.ServerDown:
+            logSoftRestartMessage("Exiting Lobby Or Server Down. Returning To Character Screen.", "info");
+            Controls.LobbyQuit.click();
+            delay(3000);
+            break;
+
+          case sdk.game.locations.CharSelect:
+          case sdk.game.locations.CharSelectConnecting:
+          case sdk.game.locations.CharSelectPleaseWait:
+          case sdk.game.locations.ServerDown:
+            if (Starter.profileInfo.charName === DataFile.getObj().name
+                && location !== sdk.game.locations.CharSelectNoChars
+                && ControlAction.getCharacters().length === 0
+              ) {
+                logSoftRestartMessage("Edge Case: Character Screen Mismatch. Exiting To Main Menu.", "warning");
+            }
+
+            logSoftRestartMessage("Exiting Character Selection Screen.", "info");
+            Controls.BottomLeftExit.click();
+            delay(1000);
+            break;
+
+          case sdk.game.locations.MainMenu:
+            logSoftRestartMessage("Exit Process Completed To Main Menu.", "info");
+            delay(1000);
+            break MainLoop;
+        }
+      }
+    }
+
+    if (getLocation() === sdk.game.locations.MainMenu) {
+      switch (true) {
+        case Starter.FTJCount === Developer.consecutiveFTJ.count:
+          logSoftRestartMessage("FTJ Count Reached. Applying Short Delay. (" + Starter.FTJCount + ")", "info");
+          ControlAction.timeoutDelay(msg + "  |  Short Soft Restart  |  Waiting:", minGameTime + 180 * 1e3);
+          break;
+
+        case Starter.FTJCount === Developer.consecutiveFTJ.stopAfter:
+          logSoftRestartMessage("FTJ Limit Reached. Stopping Profile.", "error");
+          ControlAction.timeoutDelay("FTJ Delay  |  Soft Restart  |  Limit Reached. Stopping Profile  |  Waiting:", minGameTime * 1e3);
+          D2Bot.printToConsole("Shutting Down Profile Due To Consecutive FTJ Issues (FTJ Count: " + Starter.FTJCount + ")", sdk.colors.D2Bot.Red);
+          D2Bot.stop(true, true);
+          return false;
+
+        case Starter.FTJCount > Developer.consecutiveFTJ.count && Starter.FTJCount < Developer.consecutiveFTJ.stopAfter:
+          logSoftRestartMessage("FTJ Count Exceeds Limit. Applying Longer Delay. (" + Starter.FTJCount + ")", "warning");
+          ControlAction.timeoutDelay(msg + "  |  Long Soft Restart  |  Waiting:", minGameTime + 680 * 1e3);
+          break;
+
+        default:
+          logSoftRestartMessage("Default Delay Applied.", "info");
+          ControlAction.timeoutDelay(msg + "  |  Soft Restart  |  Waiting:", minGameTime * 1e3);
+          break;
+      }
+    }
+
+    try {
+      Starter.lastGameStatus = "ready";
+      Starter.isUp = "no";
+      logSoftRestartMessage("Reinitializing. Checking Game Location.", "info");
+
+      while (true) {
+        LocationAction.run();
+
+        if (getLocation() === sdk.game.locations.CreateGame) break;
+        delay(100);
+      }
+
+      return true;
+    } finally {
+      logSoftRestartMessage("Soft Restart Process Completed. Exiting.", "info");
+    }
+  };
 
   Starter.LocationEvents.loginError = function () {
     let cdkeyError = false;
@@ -1196,7 +1265,7 @@ const LocationAction = {
         } else {
           Controls.UnableToConnectOk.click();
           ControlAction.timeoutDelay("Key in use", Starter.Config.CDKeyInUseDelay * 6e4);
-          
+
           return;
         }
 
@@ -1232,7 +1301,7 @@ const LocationAction = {
       case getLocaleString(sdk.locale.text.LadderCannotPlayWithNonLadder):
         ControlAction.timeoutDelay("Non-Ladder Mule Game Cannot Join", 10 * 1e3);
         D2Bot.printToConsole("AutoMule is not a ladder character");
-        ControlAction.SoftRestart("Failed To Join AutoMule Game");
+        SoftRestart("Failed To Join AutoMule Game");
 
         break;
       default:
@@ -1297,7 +1366,7 @@ const LocationAction = {
 
     if (Starter.deadCheck && ControlAction.deleteAndRemakeChar(Starter.profileInfo)) {
       Starter.deadCheck = false;
-      
+
       return;
     }
 
@@ -1330,6 +1399,7 @@ const LocationAction = {
             break;
 
           default:
+            if (ControlAction.getCharacters().length === 0) ControlAction.makeCharacter(Starter.profileInfo);
             if (ControlAction.getCharacters().length >= 18) {
               D2Bot.printToConsole("Kolbot-SoloPlay: Account is full", sdk.colors.D2Bot.Red);
               D2Bot.stop();
@@ -1602,7 +1672,7 @@ const LocationAction = {
       function (loc) {
         (!Starter.locationTimeout(Starter.Config.PleaseWaitTimeout * 1e3, loc)
           && Controls.OkCentered.click()
-          && ControlAction.SoftRestart("Stuck At Please Wait Screen"));
+          && SoftRestart("Stuck At Please Wait Screen"));
       }
     ],
     [
@@ -1668,8 +1738,6 @@ const LocationAction = {
     [
       sdk.game.locations.CreateGame,
       function (loc) {
-        let FTC = false;
-
         D2Bot.updateStatus("Creating Game");
         ControlAction.timeoutDelay("Create Game Delay  |  Waiting:", Starter.Config.CreateGameDelay * 1e3);
 
@@ -1688,7 +1756,7 @@ const LocationAction = {
 
         D2Bot.requestGameInfo();
         delay(500);
-        
+
         // todo - really don't need use profiles set difficulty for online. Only single player so re-write difficulty stuff
         Starter.checkDifficulty();
 
@@ -1710,9 +1778,9 @@ const LocationAction = {
           const GlobalSettingsLabel = Developer.GlobalSettings.GSLabel
             ? "GS-" + Developer.GlobalSettings.GameName + lastPart + "-" // Add a prefix if GSLabel is true.
             : Developer.GlobalSettings.GameName + lastPart + "-"; // Use the GameName as is.
-          
+
           Starter.gameInfo.gameName = GlobalSettingsLabel;
-        
+
           break;
         case Starter.gameInfo.gameName === "":
         case Starter.gameInfo.gameName === "Name":
@@ -1720,13 +1788,43 @@ const LocationAction = {
             Starter.profileInfo.charName.substring(0, 7) + "-"
             + Starter.randomString(3, false) + "-"
           );
-          
+
           break;
         }
 
         // FTJ handler
         if (Starter.lastGameStatus === "pending") {
-          ControlAction.handleFTJ();
+          Starter.isUp = "no";
+
+          // Initialize Starter.FTJCount if it's NaN
+          if (typeof Starter.FTJCount === 'undefined') {
+            Starter.FTJCount = 0; // Initialize it if undefined
+          }
+
+          Starter.FTJCount++;
+          D2Bot.updateRuns();
+
+          // Function to handle FTJ scenarios
+          switch (true) {
+          case (Starter.FTJCount === 2):
+            console.log(sdk.colors.Yellow + "Failed To Join/Create Game (FTJ Count: " + Starter.FTJCount + ")");
+            delay(1000);
+            console.log(sdk.colors.Green + "Initializing SoftRestart Process...");
+            ControlAction.timeoutDelay("FTJ Delay | Soft Restart  |  Waiting:", Developer.consecutiveFTJ.delay * 1e3);
+            SoftRestart("Delaying to Avoid Game Creation Limits");
+            break;
+
+          case (Starter.FTJCount > Developer.consecutiveFTJ.count):
+            logSoftRestartMessage("Failed To Join/Create Game (FTJ Count: " + Starter.FTJCount + ")", "warning");
+            ControlAction.timeoutDelay("FTJ Delay | Soft Restart  |  Waiting:", Developer.consecutiveFTJ.delay * 1e3);
+            SoftRestart("Delaying to Avoid Game Creation Limits");
+            break;
+
+          default:
+            console.log(sdk.colors.Yellow + "Failed To Join/Create Game (FTJ Count: " + Starter.FTJCount + ")");
+            ControlAction.timeoutDelay("FTJ Delay | Waiting:", minGameTime * 1e3);
+            break;
+          }
         }
 
         let [gameName, gamePass, difficulty, gameDelay] = [
@@ -1736,14 +1834,12 @@ const LocationAction = {
           Time.seconds(Starter.Config.CreateGameDelay)
         ];
 
+        // Reuse the existing game creation logic
         ControlAction.createGame(gameName, gamePass, difficulty, gameDelay);
+
         Starter.lastGameStatus = "pending";
         Starter.setNextGame(Starter.gameInfo);
-        Starter.locationTimeout(10000, loc);
-
-        if (Starter.inGame === true && !FTC) {
-          Starter.consecutiveFTJCount = 0; // Reset on a successful game creation
-        }
+        Starter.locationTimeout(10000, sdk.game.locations.CreateGame);
       }
     ],
     [
@@ -1826,7 +1922,7 @@ const LocationAction = {
           break;
         }
         Controls.OkCentered.click();
-        
+
         ControlAction.timeoutDelay("Error", Time.minutes(1));
       }
     ]

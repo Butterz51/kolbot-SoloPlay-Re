@@ -16,9 +16,9 @@ Misc.screenshotErrors = true;
 /**
  * @override
  * @template T
- * @param {number} area 
- * @param {number[]} chestIds 
- * @param {function(T, T): number} [sort] 
+ * @param {number} area
+ * @param {number[]} chestIds
+ * @param {function(T, T): number} [sort]
  * @returns {boolean}
  */
 Misc.openChestsInArea = function (area, chestIds = [], sort = undefined) {
@@ -26,7 +26,7 @@ Misc.openChestsInArea = function (area, chestIds = [], sort = undefined) {
   typeof sort !== "function" && (sort = Sort.units);
   area !== me.area && Pather.journeyTo(area);
   !chestIds.length && (chestIds = sdk.objects.chestIds.slice(0));
-    
+
   const presetUnits = Game.getPresetObjects(area)
     .filter(function (preset) {
       return chestIds.includes(preset.id);
@@ -55,12 +55,12 @@ Misc.openChestsInArea = function (area, chestIds = [], sort = undefined) {
 
 /**
  * @description Open a chest Unit (takes chestID or unit)
- * @param {Unit | number} unit 
+ * @param {Unit | number} unit
  * @returns {boolean} If we opened the chest
  */
 Misc.openChest = function (unit) {
   typeof unit === "number" && (unit = Game.getObject(unit));
-    
+
   // Skip invalid/open and Countess chests
   if (!unit || unit.x === 12526 || unit.x === 12565 || unit.mode) return false;
   // locked chest, no keys
@@ -102,7 +102,7 @@ Misc.openChest = function (unit) {
 };
 
 /**
- * @param {number} range 
+ * @param {number} range
  * @returns {boolean}
  * @todo Take path parameter to we can open the chests in an order that brings us closer to our destination
  */
@@ -174,7 +174,7 @@ Misc.openChests = function (range = 15) {
 };
 
 /**
- * @param {ObjectUnit} unit 
+ * @param {ObjectUnit} unit
  * @returns {boolean}
  */
 Misc.getWell = function (unit) {
@@ -259,8 +259,8 @@ Misc.lastShrine = new function () {
 
 /**
  * Use a shrine Unit
- * @param {ObjectUnit} unit 
- * @returns {boolean} 
+ * @param {ObjectUnit} unit
+ * @returns {boolean}
  */
 Misc.getShrine = function (unit) {
   if (unit.mode === sdk.objects.mode.Active) return false;
@@ -296,8 +296,8 @@ Misc.getShrine = function (unit) {
 };
 
 /**
- * @param {number} range 
- * @param {number[]} ignore 
+ * @param {number} range
+ * @param {number[]} ignore
  * @returns {boolean}
  */
 Misc.scanShrines = function (range, ignore = []) {
@@ -391,9 +391,9 @@ Misc.scanShrines = function (range, ignore = []) {
 
 /**
  * Check all shrines in area and get the first one of specified type
- * @param {number} area 
- * @param {number} type 
- * @param {boolean} use 
+ * @param {number} area
+ * @param {number} type
+ * @param {boolean} use
  * @returns {boolean} Sucesfully found shrine(s)
  * @todo If we are trying to find a specific shrine then generate path and perform callback after each node to see if we are within range
  * of getUnit and can see the shrine type so we know whether to continue moving to it or not.
@@ -423,7 +423,7 @@ Misc.getShrinesInArea = function (area, type, use) {
 
   try {
     NodeAction.shrinesToIgnore.push(type);
-    
+
     while (shrineLocs.length > 0) {
       shrineLocs.sort(Sort.units);
       let coords = shrineLocs.shift();
@@ -512,7 +512,7 @@ Misc.getExpShrine = function (shrineLocs = []) {
 };
 
 /**
- * @param {ItemUnit} item 
+ * @param {ItemUnit} item
  * @returns {boolean}
  */
 Misc.unsocketItem = function (item) {
@@ -606,8 +606,8 @@ Misc.checkItemsForImbueing = function () {
 };
 
 /**
- * @param {ItemUnit} item 
- * @param {ItemUnit[]} runes 
+ * @param {ItemUnit} item
+ * @param {ItemUnit[]} runes
  * @returns {boolean}
  */
 Misc.addSocketablesToItem = function (item, runes = []) {
@@ -642,7 +642,7 @@ Misc.addSocketablesToItem = function (item, runes = []) {
         .dword(rune.gid)
         .dword(item.gid)
         .send();
-      
+
       let tick = getTickCount();
 
       while (getTickCount() - tick < 2000) {
@@ -657,7 +657,26 @@ Misc.addSocketablesToItem = function (item, runes = []) {
 
       if (item.getItemsEx().length > preSockets) {
         if (!Features.SoloPlayConsole.HideSocket) D2Bot.printToConsole("Added socketable: " + rune.fname + " to " + item.fname, sdk.colors.D2Bot.Gold);
-        Item.logItem("Added " + rune.name + " to ", item, null, true);
+        //Item.logItem("Added " + rune.name + " to ", item, null, true);
+
+        switch (true) {
+          case SetUp.finalBuild === "Bumper" && Developer.fillAccount.Bumper.HidePickit:
+            if (!Developer.fillAccount.Bumper.HidePickit) Item.logItem("Added " + rune.name + " to ", item, null, true);
+            break;
+
+          case SetUp.finalBuild === "Socketmule" && Developer.fillAccount.SocketMules.HidePickit:
+            if (!Developer.fillAccount.SocketMules.HidePickit) Item.logItem("Added " + rune.name + " to ", item, null, true);
+            break;
+// "Start" || "Questing" &&
+          case SetUp.finalBuild === "Imbuemule" && Developer.fillAccount.ImbueMules.HidePickit:
+            if (!Developer.fillAccount.ImbueMules.HidePickit) Item.logItem("Added " + rune.name + " to ", item, null, true);
+            break;
+
+          default:
+            Item.logItem("Added " + rune.name + " to ", item, null, true);
+            break;
+          }
+
         preSockets++;
       }
     }
@@ -669,8 +688,8 @@ Misc.addSocketablesToItem = function (item, runes = []) {
 };
 
 /**
- * @param {ItemUnit} item 
- * @param {{ classid: number, socketWith: number[], temp: number[], useSocketQuest: boolean, condition: Function }} [itemInfo] 
+ * @param {ItemUnit} item
+ * @param {{ classid: number, socketWith: number[], temp: number[], useSocketQuest: boolean, condition: Function }} [itemInfo]
  * @returns {boolean}
  */
 Misc.getSocketables = function (item, itemInfo) {
@@ -793,7 +812,7 @@ Misc.getSocketables = function (item, itemInfo) {
       }
     }
   }
-  
+
   if (multiple.length > 0) {
     multiple.length > openSockets && (multiple.length = openSockets);
     if (openSockets === 0) return false;
